@@ -10,11 +10,16 @@ export NITROS9_LANGUAGES_DIR
 include $(NITROS9DIR)/rules.mak
 
 dirs = basic09 bf ccompiler
+clean_dirs = $(addprefix clean-,$(dirs))
 
-all:
-	$(foreach dir,$(dirs),$(MAKE) -C $(dir) &&) :
+all: $(dirs)
 
-clean:
-	$(foreach dir,$(dirs),$(MAKE) -C $(dir) clean &&) :
+$(dirs):
+	$(MAKE) -C $@
 
-.PHONY: all clean
+clean: $(clean_dirs)
+
+$(clean_dirs):
+	$(MAKE) -C $(patsubst clean-%,%,$@) clean
+
+.PHONY: all clean $(dirs) $(clean_dirs)

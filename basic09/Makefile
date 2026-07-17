@@ -6,11 +6,7 @@ COCO3_FLOPPY_BASE_NAME  = l2_coco3.dsk
 COCO3_FLOPPY_BASE       = $(COCO3_FLOPPY_RECIPE_DIR)/$(COCO3_FLOPPY_BASE_NAME)
 NITROS9_LANGUAGES_DIR  ?= $(abspath ..)
 
-# Non-NitrOS-9
-M6809		= $(AFLAGS)
-
 DEFOPTS         = --preprocess -DLevel=2
-DEPENDS		= ./Makefile
 MICROWARE_DIR	= microware
 MICROWARE_SRCS	= \
 	$(MICROWARE_DIR)/build-modular-basic09.py \
@@ -29,7 +25,6 @@ MICROWARE_SRCS	= \
 	$(MICROWARE_DIR)/editor
 
 DEFOBJS		= coco3vtio.d
-TEXTFILES	= ReadMe2 install6809 install6309
 OBJS		= gfx gfx2 inkey syscall
 OBJS6809	= basic09_6809 runb_6809
 OBJS6309	= basic09_6309 runb_6309
@@ -40,7 +35,7 @@ DSKOBJS		= $(OBJS) $(OBJS6809)
 
 .PHONY: all banner clean showobjs
 
-all:	banner $(ALLOBJS) $(DSK) $(DEPENDS)
+all:	banner $(ALLOBJS) $(DSK)
 
 banner:
 	@$(ECHO) "**************************************************"
@@ -53,7 +48,7 @@ coco3vtio.d: $(DEFSDIR)/cocovtio.d
 	$(AS) $(AFLAGS) $(DEFOPTS) -DCOCOVTIO.D=0 $< > $@
 
 gfx2: gfx2.asm coco3vtio.d
-	$(AS) $(ASOUT)$@ $< $(M6809) -DLevel=2
+	$(AS) $(ASOUT)$@ $< $(AFLAGS) -DLevel=2
 
 $(OBJS6809) $(OBJS6309): $(MICROWARE_SRCS)
 	$(MAKE) -C $(MICROWARE_DIR) $@
@@ -67,7 +62,7 @@ clean:
 	$(RM) $(ALLOBJS) $(DSK) *.list *.map
 	$(MAKE) -C $(MICROWARE_DIR) clean
 
-$(DSK): $(DSKOBJS) $(COCO3_FLOPPY_BASE)
+$(DSK): Makefile $(DSKOBJS) $(COCO3_FLOPPY_BASE)
 	$(RM) $@
 	$(CP) $(COCO3_FLOPPY_BASE) $@
 	$(OS9COPY) -r basic09_6809 $@,CMDS/basic09

@@ -2,11 +2,16 @@ include $(NITROS9DIR)/rules.mak
 
 DSK		= CCompiler.dsk
 CMDS		= cc1 c.prep c.pass1 c.pass2 c.opt c.asm c_asm c.link make
+HEADERS		= $(wildcard defs/*.h)
+LIBRARIES	= $(wildcard lib/*.l lib/*.r)
+C_SOURCES	= $(wildcard sources/*.c)
+ASM_SOURCES	= $(wildcard sources/*.a)
+SYS_SOURCES	= $(wildcard sources/*.sys)
 
-ALLOBJS		= $(CMDS)
+.PHONY: all banner clean
 
 # Make all components
-all:	banner $(ALLOBJS) $(DSK)
+all:	banner $(CMDS) $(DSK)
 
 banner:
 	@$(ECHO) "**************************************************"
@@ -17,12 +22,13 @@ banner:
 
 # Clean all components
 clean:
-	$(RM) $(ALLOBJS) $(DSK) *.list *.map
+	$(RM) $(CMDS) $(DSK) *.list *.map
 
 c.asm: c_asm
-	$(CP) $^ $@
+	$(CP) $< $@
 
-$(DSK): $(ALLOBJS)
+$(DSK): Makefile $(CMDS) $(HEADERS) $(LIBRARIES) $(C_SOURCES) \
+	$(ASM_SOURCES) $(SYS_SOURCES)
 	$(RM) $@
 	$(OS9FORMAT_DS40) -q $@ -n"C Compiler"
 	$(MAKDIR) $@,CMDS
@@ -32,7 +38,7 @@ $(DSK): $(ALLOBJS)
 	$(MAKDIR) $@,SOURCES/SYS
 	$(OS9COPY) $(CMDS) $@,CMDS
 	$(OS9ATTR_EXEC) $(foreach file,$(CMDS),$@,CMDS/$(file))
-	$(CPL) defs/*.h $@,DEFS
-	$(OS9COPY) lib/*.l lib/*.r $@,LIB
-	$(CPL) sources/*.c $@,SOURCES
-	$(CPL) sources/*.a $@,SOURCES/SYS
+	$(CPL) $(HEADERS) $@,DEFS
+	$(OS9COPY) $(LIBRARIES) $@,LIB
+	$(CPL) $(C_SOURCES) $@,SOURCES
+	$(CPL) $(ASM_SOURCES) $(SYS_SOURCES) $@,SOURCES/SYS

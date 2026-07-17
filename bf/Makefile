@@ -2,20 +2,14 @@ include $(NITROS9DIR)/rules.mak
 
 DSK	= bf.dsk
 
-# NitrOS-9
-H6309		= $(AFLAGS) -DH6309=1
-# Non-NitrOS-9
-M6809		= $(AFLAGS)
-
-DEPENDS		= ./Makefile
-
-#SOURCEFILES = inout.bf helloworld.bf donothing.bf
-SOURCEFILES = $(shell echo *.bf)
+SOURCEFILES := $(wildcard *.bf)
 TEXTFILES	= README.md $(SOURCEFILES)
 OBJS		= bf
 ALLOBJS		= $(OBJS)
 
-all:	banner $(ALLOBJS) $(DSK) $(DEPENDS)
+.PHONY: all banner clean showobjs showfiles
+
+all:	banner $(ALLOBJS) $(DSK)
 
 banner:
 	@$(ECHO) "**************************************************"
@@ -25,12 +19,12 @@ banner:
 	@$(ECHO) "**************************************************"
 
 bf: bf.asm
-	$(AS) $(ASOUT)$@ $< $(H6309)
+	$(AS) $(ASOUT)$@ $< $(AFLAGS) -DH6309=1
 
 clean:
 	$(RM) $(ALLOBJS) $(DSK) *.list *.map
 
-$(DSK): $(ALLOBJS)
+$(DSK): Makefile $(ALLOBJS) $(TEXTFILES)
 	$(RM) $@
 	$(OS9FORMAT_SS35) $@ -n"bf"
 	$(MAKDIR) $@,CMDS
