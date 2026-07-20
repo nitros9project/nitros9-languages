@@ -1,8 +1,8 @@
  nam Expression Interpreter
- use DEFS
+ use defs
  ttl External Linkage Section
  pag
- use LINKAGE
+ use linkage
 
 ***************
 * Expressions Global Entry Points

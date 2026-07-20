@@ -159,7 +159,7 @@ CPYRIT
 
  ttl External Linkage Section
  pag
- use LINKAGE
+ use linkage
 
 ***************
 * Global Entry Points

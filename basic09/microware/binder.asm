@@ -1,10 +1,10 @@
 
  nam Binder
- use DEFS
+ use defs
 
  ttl External Linkages
  pag
- use LINKAGE
+ use linkage
 
 ***************
 * Global ENTRY Points

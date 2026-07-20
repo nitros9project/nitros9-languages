@@ -1,10 +1,10 @@
 
  nam Statement Interpreter
- use DEFS
+ use defs
 
  ttl External Linkage Section
  pag
- use LINKAGE
+ use linkage
 
 ***************
 * Global Entry Points

@@ -1,10 +1,10 @@
 
  nam CNVIO
- use DEFS
+ use defs
 
  ttl External Linkage
  pag
- use LINKAGE
+ use linkage
 
 ***************
 * Global Entry Points
