@@ -5012,7 +5012,7 @@ L2E26               ldd       #$0006
                     tfr       d,u
 L2E32               ldd       $0039
                     beq       L2E3C
-                    stu       [$003B,y]
+                    stu       [>$003B,y]
                     bra       L2E3E
 
 L2E3C               stu       $0039
@@ -7270,7 +7270,7 @@ L42F9               clra
 L430E               lbsr      L4509
                     std       $004A
                     lbeq      L4403
-                    ldb       [$004A,y]
+                    ldb       [>$004A,y]
                     cmpb      #$23
                     lbne      L44C5
                     ldx       $004A
@@ -14638,7 +14638,7 @@ L876A               ldd       $0C,s
                     ldd       L006A
                     beq       L8780
                     ldd       $06,s
-                    std       [L006C,y]
+                    std       [>L006C,y]
                     bra       L8784
 
 L8780               ldd       $06,s
@@ -14991,7 +14991,7 @@ L8A05               ldd       L006A
                     ldd       [$04,s]
                     std       $04,s
                     ldd       $006E
-                    std       [L006A,y]
+                    std       [>L006A,y]
                     ldd       L006A
                     std       $006E
                     ldd       $04,s
@@ -16692,7 +16692,7 @@ L9A4D               pshs      u
                     leas      $04,s
                     clra
                     clrb
-                    stb       [L0070,y]
+                    stb       [>L0070,y]
                     puls      pc,u
 doprnt              pshs      u
                     ldu       $04,s
@@ -19312,7 +19312,7 @@ LAFC0               subd      #$0000
 
 LAFCB               ldx       $02,s
                     pshs      x
-                    jsr       [$089f,y]
+                    jsr       [>$089f,y]
                     ldd       ,s
                     std       $02,s
                     tfr       x,d
@@ -19738,7 +19738,7 @@ LB31C               pshs      u
 LB332               tfr       u,y
                     clra
                     pshs      d
-                    jsr       [$08A3,y]
+                    jsr       [>$08A3,y]
                     leas      $02,s
                     rti
 

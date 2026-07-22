@@ -481,7 +481,7 @@ L042F               ldx       $000D
                     stx       $000D
                     ldd       ,x
                     beq       L042F
-                    ldd       [$000D,y]
+                    ldd       [>$000D,y]
                     puls      pc,u
 L043F               ldd       $0221,y
                     beq       L04A0
@@ -751,7 +751,7 @@ L0656               ldd       $0011
 L0677               ldd       #$0004
                     lbsr      L357F
                     std       $10,s
-                    std       [_start,y]
+                    std       [>_start,y]
                     beq       L069B
                     ldd       $10,s
                     addd      #$0002
@@ -798,7 +798,7 @@ L06DE               pshs      u
                     tfr       x,d
                     bra       L0704
 
-L06F2               ldb       [$0009,y]
+L06F2               ldb       [>$0009,y]
                     cmpb      #$2d
                     bne       L0702
                     leax      $009a,y
@@ -1536,7 +1536,7 @@ L0FF5               pshs      u,d
                     ldd       #$0004
 L1000               lbsr      L21FB
                     tfr       d,u
-                    stu       [L001F,y]
+                    stu       [>L001F,y]
                     ldd       ,s
                     std       ,u
                     leax      $02,u
@@ -1609,7 +1609,7 @@ L1093               ldd       ,s
                     bne       L1085
 L10AE               ldd       L0021
                     beq       L10CD
-                    ldu       [L001D,y]
+                    ldu       [>L001D,y]
                     ldx       ,u
                     ldd       $02,x
                     pshs      d
@@ -3100,7 +3100,7 @@ L1F93               pshs      u
                     lbsr      L2015
                     leas      $02,s
                     ldd       ,s
-                    std       [$0005,y]
+                    std       [>$0005,y]
                     addd      #$000B
                     std       $0005
 L1FC0               bra       L1FF4
@@ -3617,7 +3617,7 @@ L2481               leax      L2636,pcr
                     addd      #$0001
                     std       $022d,y
 L24A8               ldd       $06,s
-                    std       [$0007,y]
+                    std       [>$0007,y]
                     addd      #$0002
                     std       $0007
 L24B3               leas      $08,s
@@ -4178,7 +4178,7 @@ L291D               pshs      u,d
                     leas      $04,s
                     clra
                     clrb
-                    stb       [$16D5,y]
+                    stb       [>$16D5,y]
                     ldd       ,s
 L293F               leas      $02,s
                     puls      pc,u
@@ -6116,7 +6116,7 @@ L3900               pshs      u
 
 L3914               tfr       u,y
                     clra
-                    jsr       [$16F5,y]
+                    jsr       [>$16F5,y]
                     rti
 
 L391C               tfr       b,a

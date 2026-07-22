@@ -3086,7 +3086,7 @@ L1ADA               pshs      u
                     leas      $06,s
                     clra
                     clrb
-                    stb       [$086b,y]
+                    stb       [>$086b,y]
                     ldd       $04,s
                     puls      pc,u
 doprnt              pshs      u

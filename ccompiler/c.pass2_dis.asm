@@ -5020,7 +5020,7 @@ L2D65               pshs      d
                     leas      $04,s
                     clra
                     clrb
-                    stb       [L001B,y]
+                    stb       [>L001B,y]
                     puls      pc,u
 doprnt              pshs      u
                     ldu       $04,s
@@ -10542,7 +10542,7 @@ L5F04               subd      #$0000
 
 L5F0F               ldx       $02,s
                     pshs      x
-                    jsr       [$02E3,y]
+                    jsr       [>$02E3,y]
                     ldd       ,s
                     std       $02,s
                     tfr       x,d

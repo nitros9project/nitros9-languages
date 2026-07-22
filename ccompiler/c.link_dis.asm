@@ -3757,7 +3757,7 @@ L23DD               pshs      d
                     leas      $06,s
                     clra
                     clrb
-                    stb       [$066d,y]
+                    stb       [>$066d,y]
                     ldd       $04,s
                     puls      pc,u
 L240F               pshs      u
@@ -5489,7 +5489,7 @@ L31F4               subd      #$0000
 
 L31FF               ldx       $02,s
                     pshs      x
-                    jsr       [$0688,y]
+                    jsr       [>$0688,y]
                     ldd       ,s
                     std       $02,s
                     tfr       x,d
@@ -5903,7 +5903,7 @@ L353B               pshs      u
 L3551               tfr       u,y
                     clra
                     pshs      d
-                    jsr       [$068C,y]
+                    jsr       [>$068C,y]
                     leas      $02,s
                     rti
 

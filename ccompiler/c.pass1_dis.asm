@@ -4831,7 +4831,7 @@ L2C21               ldd       #$0006
                     tfr       d,u
 L2C2D               ldd       L0059
                     beq       L2C37
-                    stu       [$005B,y]
+                    stu       [>$005B,y]
                     bra       L2C39
 
 L2C37               stu       L0059
@@ -6122,7 +6122,7 @@ L37FF               ldd       $0C,s
                     ldd       $0005
                     beq       L3815
                     ldd       $06,s
-                    std       [$0007,y]
+                    std       [>$0007,y]
                     bra       L3819
 
 L3815               ldd       $06,s
@@ -6475,7 +6475,7 @@ L3A9A               ldd       $0005
                     ldd       [$04,s]
                     std       $04,s
                     ldd       $0009
-                    std       [$0005,y]
+                    std       [>$0005,y]
                     ldd       $0005
                     std       $0009
                     ldd       $04,s
@@ -8881,7 +8881,7 @@ L50FC               pshs      u
                     leas      $04,s
                     clra
                     clrb
-                    stb       [$000F,y]
+                    stb       [>$000F,y]
                     puls      pc,u
 doprnt              pshs      u
                     ldu       $04,s
@@ -11013,7 +11013,7 @@ L6385               clra
 L639A               lbsr      L65A3
                     std       $006A
                     lbeq      L64A4
-                    ldb       [$006A,y]
+                    ldb       [>$006A,y]
                     cmpb      #$23
                     lbne      L655F
                     ldx       $006A
@@ -13111,7 +13111,7 @@ L75B4               subd      #$0000
 
 L75BF               ldx       $02,s
                     pshs      x
-                    jsr       [$080d,y]
+                    jsr       [>$080d,y]
                     ldd       ,s
                     std       $02,s
                     tfr       x,d
@@ -13537,7 +13537,7 @@ L7910               pshs      u
 L7926               tfr       u,y
                     clra
                     pshs      d
-                    jsr       [$0811,y]
+                    jsr       [>$0811,y]
                     leas      $02,s
                     rti
 
