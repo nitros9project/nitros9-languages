@@ -2,6 +2,7 @@ include $(NITROS9DIR)/rules.mak
 
 DSK		= CCompiler.dsk
 CMDS		= cc1 c.prep c.pass1 c.pass2 c.opt c.asm c_asm c.link make
+DIS_MODULES	= cc1 c.pass1 c.pass2 c.opt c.link make c.comp
 HEADERS		= $(wildcard defs/*.h)
 LIBRARIES	= $(wildcard lib/*.l lib/*.r)
 C_SOURCES	= $(wildcard sources/*.c)
@@ -23,6 +24,10 @@ banner:
 # Clean all components
 clean:
 	$(RM) $(CMDS) $(DSK) *.list *.map
+
+# Build the recovered, maintainable disassemblies instead of the raw byte dumps.
+$(DIS_MODULES): %: %_dis.asm
+	$(AS) $(AFLAGS) $< $(ASOUT)$@
 
 c.asm: c_asm
 	$(CP) $< $@
