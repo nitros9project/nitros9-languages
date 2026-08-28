@@ -9,10 +9,13 @@ DEPS = Makefile $(SCRIPT) $(SRCS)
 
 .PHONY: all clean
 
-all: basic09_6809 runb_6809 basic09_6309 runb_6309
+all: basic09_6809 basic09_wildbits runb_6809 basic09_6309 runb_6309
 
 basic09_6809: $(DEPS)
 	$(PYTHON) $(SCRIPT) basic09 $@ -DCOMMUNITY=1
+
+basic09_wildbits: $(DEPS)
+	$(PYTHON) $(SCRIPT) basic09 $@ -DCOMMUNITY=1 -Dwildbits=1
 
 runb_6809: $(DEPS)
 	$(PYTHON) $(SCRIPT) runb $@ -DCOMMUNITY=1
@@ -24,6 +27,6 @@ runb_6309: $(DEPS)
 	$(PYTHON) $(SCRIPT) runb $@ -DCOMMUNITY=1 -DH6309=1
 
 clean:
-	rm -f basic09_6809 runb_6809 basic09_6309 runb_6309
+	rm -f basic09_6809 basic09_wildbits runb_6809 basic09_6309 runb_6309
 	rm -rf .modular-build
 	rm -f *.list *.map
