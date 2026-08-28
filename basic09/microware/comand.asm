@@ -112,6 +112,10 @@ B09NAM fcs "RunB"
 * and Terry Ritter at Motorola.
 
 CPYRIT
+ ifne wildbits
+ fcb V$LF
+ fcb V$LF+$80
+ else
  ifne Tandy-0
  ifne dragon-0
  fcb $0C Clear Screen
@@ -153,6 +157,7 @@ CPYRIT
  fcb V$LF
  fcc "(no trig functions)"
  fcb V$LF+$80
+ endc
  endc
 
 ***************
@@ -1237,7 +1242,11 @@ START15 lda #$7E JMP Opcode
  stx KEYWORDS save Keyword Table addr for compiler
  ldb  ,Y
  cmpb #V$CR End of command line?
+ ifne wildbits
+ lbeq BannerGo ..yes; print WildBits logo, then enter Basic09 command
+ else
  beq COMAND ..yes; enter Basic09 command
+ endc
  leax <START2,PCR
  pshs y Save param ptr
  bsr SETUP1
@@ -2461,6 +2470,153 @@ FLOTU9 leas 4,S
  puls D,X,Y,U,PC
 
  endc
+				ifne		wildbits
+BannerGo            leax      NEWLN,pcr
+                    ldy       #NEWLNLEN
+                    lda       #1
+                    os9       I$Writln
+                    bcs       BNRERR
+                    leax      OUTSTR,pcr
+                    ldy       #STRLEN
+                    lda       #1
+                    os9       I$Write
+                    bcs       BNRERR
+                    ldx       #$FE00
+                    lda       7,x
+                    cmpa      #$02
+                    bne       isItK
+                    leax      OUTSTR2,pcr
+                    ldy       #STRLEN2
+                    lda       #1
+                    os9       I$Writln
+                    bcs       BNRERR
+                    bra       CONT
+isItK           cmpa      #$12
+                    bne       isItK2
+                    leax      OUTSTR3,pcr
+                    ldy       #STRLEN3
+                    lda       #1
+                    os9       I$Writln
+                    bcs       BNRERR
+                    bra       CONT
+isItK2          cmpa      #$16
+                    bne       isItJrJr
+                    leax      OUTSTR4,pcr
+                    ldy       #STRLEN4
+                    lda       #1
+                    os9       I$Writln
+                    bcs       BNRERR
+                    bra       CONT
+isItJrJr            cmpa      #$1A
+                    bne       BNRERR
+                    leax      OUTSTR5,pcr
+                    ldy       #STRLEN5
+                    lda       #1
+                    os9       I$Writln
+                    bcs       BNRERR
+CONT                leax      BASL2,pcr
+                    ldy       #BASLEN2
+                    lda       #1
+                    os9       I$Write
+                    bcs       BNRERR
+BNRDONE                ldb       #0
+BNRERR               lbra      COMAND
+OUTSTR              fcb       $1b,$32,$07,$1c,$13,$1c,$11,$1c,$11
+                    fcb       $1c,$11,$1c,$11,$1c,$11,$1c,$05
+                    fcb       $1b,$32,$06,$20,$20,$1b,$32,$08,$1c,$10,$1c,$11
+                    fcb       $1c,$11,$1c,$11,$1c,$0a,$1b,$32,$06,$20,$20
+                    fcb       $1b,$32,$04,$1c,$03,$1c,$11,$1c,$11,$1c,$11,$1c
+                    fcb       $11,$1c,$11,$1c,$05
+                    fcb       $1b,$32,$06,$20,$1b,$32,$0e,$1c,$11,$1c,$12,$1b,$32,$06
+                    fcb       $20,$1b,$32,$05,$1c,$03,$1c,$11,$1c,$11,$1c,$11,$1c,$11
+                    fcb       $1c,$05
+                    fcb       $1b,$32,$06,$20,$20,$1b,$32,$0f,$1c,$10,$1c,$11
+                    fcb       $1c,$11,$1c,$11,$1c,$11,$1c,$11,$1c,$0a
+                    fcb       $1b,$32,$06,$20,$20
+                    fcb       $1b,$32,$01,$1c,$03,$1c,$11,$1c,$11,$1c,$11,$1c,$11
+                    fcb       $1c,$05
+                    fcb       $1b,$32,$06,$20,$20,$20,$20,$20,$20,$20,$20
+                    fcb       $1b,$32,$01
+STRLEN              equ       *-OUTSTR
+OUTSTR2             fcc       " Wildbits/Jr"
+                    fcb       $0D
+STRLEN2             equ       *-OUTSTR2
+OUTSTR3             fcc       "  Wildbits/K"
+                    fcb       $0D
+STRLEN3             equ       *-OUTSTR3
+OUTSTR4             fcc       "Wildbits/K2"
+                    fcb       $0D
+STRLEN4             equ       *-OUTSTR4
+OUTSTR5             fcc       "Wildbits/Jr2"
+                    fcb       $0D
+STRLEN5             equ       *-OUTSTR5
+BASL2               fcb       $1b,$32,$07,$1c,$13,$1c,$11,$1b,$32,$06,$20,$20
+                    fcb       $20,$1b,$32,$07,$1c,$13,$1c,$11,$1b,$32,$06,$20
+                    fcb       $1b,$32,$08,$1c,$10,$1c,$11,$1c,$15,$1b,$32,$06,$20
+                    fcb       $1b,$32,$08,$1c,$09,$1c,$11,$1c,$0a,$1b,$32,$06,$20
+                    fcb       $1b,$32,$04,$1c,$11,$1c,$12,$1b,$32,$06,$20,$20
+                    fcb       $20,$20,$20,$20,$1b,$32,$0e,$1c,$11,$1c,$12,$1b
+                    fcb       $32,$06,$20,$1b,$32,$05,$1c,$11,$1c,$12,$1b,$32
+                    fcb       $06,$20,$20,$20,$20,$20,$20,$1b,$32,$0f
+                    fcb       $1c,$11,$1c,$0c,$1b,$32,$06,$20,$1b,$32,$0f,$1c,$10
+                    fcb       $1c,$15,$1c,$0f,$1c,$11,$1b,$32,$06,$20,$20,$1b,$32
+                    fcb       $01,$1c,$11,$1c,$12
+                    fcb       $1b,$32,$06,$20,$20,$1b,$32,$01,$1c,$13,$1c,$11
+                    fcb       $1b,$32,$06,$20,$20,$20,$20,$20,$20,$20
+                    fcb       $20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+                    fcb       $20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+                    fcb       $20,$20,$20
+                    fcb       $1b,$32,$07,$1c,$13,$1c,$11,$1c,$11,$1c
+                    fcb       $11,$1c,$11,$1c,$11,$1c,$0b
+                    fcb       $1b,$32,$06,$20,$1b,$32,$08,$1c,$11,$1c,$11,$1c,$11
+                    fcb       $1c,$11,$1c,$11,$1c,$11,$1c,$11
+                    fcb       $1b,$32,$06,$20,$1b,$32,$04
+                    fcb       $1c,$04,$1c,$11,$1c,$11,$1c,$11,$1c,$11
+                    fcb       $1c,$11,$1c,$05,$1b,$32
+                    fcb       $06,$20,$1b,$32,$0e,$1c,$11,$1c,$12,$1b,$32,$06
+                    fcb       $20,$1b,$32,$05,$1c,$11,$1c,$12,$1b,$32,$06,$20
+                    fcb       $20,$20,$20,$20,$20,$1b,$32,$0f,$1c,$11,$1c,$12
+                    fcb       $1b,$32,$0f,$1c,$10,$1c,$11,$1c,$15,$1c,$13,$1c,$11
+                    fcb       $1b,$32,$06,$20,$20,$1b,$32,$01,$1c,$04,$1c,$11,$1c,$11
+                    fcb       $1c,$11,$1c,$11,$1c,$11,$1b,$32,$06,$20,$20,$20,$20,$20
+                    fcb       $20,$20,$20,$20,$20,$1b,$32,$01,$40,$44
+                    fcb       $72,$50,$69,$74,$72,$65,$1b,$32,$06,$20,$20
+                    fcb       $20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+                    fcb       $1b,$32,$07,$1c,$13,$1c,$11,$1b,$32,$06,$20,$20
+                    fcb       $20,$1b,$32,$07,$1c,$13,$1c,$11,$1b,$32,$06,$20
+                    fcb       $1b,$32,$08,$1c,$11,$1c,$11,$1b,$32,$06,$20,$20
+                    fcb       $20,$1b,$32,$08,$1c,$11,$1c,$11,$1b,$32,$06,$20
+                    fcb       $20,$20,$20,$20,$20,$1b,$32,$04,$1c,$13,$1c,$11
+                    fcb       $1b,$32,$06,$20,$1b,$32,$0e,$1c,$11,$1c,$12,$1b
+                    fcb       $32,$06,$20,$1b,$32,$05,$1c,$11,$1c,$12,$1b,$32
+                    fcb       $06,$20,$20,$20,$20,$20,$20,$1b,$32,$0f
+                    fcb       $1c,$11,$1c,$0e,$1c,$10,$1c,$15,$1b,$32,$06,$20
+                    fcb       $1b,$32,$0f,$1c,$0d,$1c,$11,$1b,$32,$06,$20,$20
+                    fcb       $20,$20,$20,$20,$1b,$32,$01,$1c,$13,$1c,$11
+                    fcb       $1b,$32,$06,$20,$20,$20,$20,$20,$1b,$32,$01,$40,$4a,$46
+                    fcb       $65,$64,$20,$40,$4E,$69,$74,$72,$6f,$62,$6f,$74,$69
+                    fcb       $63,$73,$1b,$32,$06
+                    fcb       $20,$20,$20,$20,$20,$20,$20
+                    fcb       $1b,$32,$07,$1c,$13,$1c,$11,$1c,$11,$1c
+                    fcb       $11,$1c,$11,$1c,$11,$1c,$06
+                    fcb       $1b,$32,$06,$20,$1b,$32,$08,$1c,$11,$1c,$15
+                    fcb       $1b,$32,$06,$20,$20,$20,$1b,$32,$08,$1c,$09
+                    fcb       $1c,$11,$1b,$32,$06,$20,$1b,$32,$04,$1c,$07,$1c,$11
+                    fcb       $1c,$11,$1c,$11,$1c,$11,$1c,$11,$1c,$06
+                    fcb       $1b,$32,$06,$20,$1b
+                    fcb       $32,$0e,$1c,$11,$1c,$12,$1b,$32,$06,$20,$1b,$32
+                    fcb       $05,$1c,$04,$1c,$11,$1c,$11,$1c,$11,$1c,$11,$1c,$06
+                    fcb       $1b,$32,$06
+                    fcb       $20,$20,$1b,$32,$0f,$1c,$09,$1c,$11,$1c,$11,$1c,$11
+                    fcb       $1c,$11,$1c,$11,$1c,$15,$1b,$32,$06,$20,$20,$1b,$32
+                    fcb       $01,$1c,$07,$1c,$11,$1c,$11,$1c,$11,$1c,$11,$1c,$06
+                    fcb       $1b,$32,$06,$20,$20,$20,$20,$20,$20,$20,$20,$1b,$32
+                    fcb       $01,$40,$4d,$61,$74,$74,$20,$4d,$61,$73
+                    fcb       $73,$69,$65,$1b,$32,$01
+BASLEN2             equ       *-BASL2
+NEWLN               fcb       $1b,$33,$06,$0c,$0d
+NEWLNLEN            equ	*-NEWLN
+				endc
 * End of Command routines
 
  use editor
