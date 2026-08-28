@@ -50,7 +50,7 @@ coco3vtio.d: $(DEFSDIR)/cocovtio.d
 gfx2: gfx2.asm coco3vtio.d
 	$(AS) $(ASOUT)$@ $< $(AFLAGS) -DLevel=2
 
-$(OBJS6809) $(OBJS6309) basic09_wildbits: $(MICROWARE_SRCS)
+$(OBJS6809) $(OBJS6309): $(MICROWARE_SRCS)
 	$(MAKE) -C $(MICROWARE_DIR) $@
 	$(CP) $(MICROWARE_DIR)/$@ $@
 
@@ -59,7 +59,7 @@ $(COCO3_FLOPPY_BASE):
 		NITROS9DIR=$(NITROS9DIR) LANGUAGES=$(NITROS9_LANGUAGES_DIR)
 
 clean:
-	$(RM) $(ALLOBJS) basic09_wildbits $(DSK) *.list *.map
+	$(RM) $(ALLOBJS) $(DSK) *.list *.map
 	$(MAKE) -C $(MICROWARE_DIR) clean
 
 $(DSK): Makefile $(DSKOBJS) $(COCO3_FLOPPY_BASE)
