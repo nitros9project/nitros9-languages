@@ -109,6 +109,7 @@ for d in lib.a sys.a; do
 	for f in "$c3/lib/$d"/*.a; do ppa "$f" > "$stage/src/lib/$d/$(basename "$f")"; done
 done
 cp "$c3/lib/lib.a/chcodes.c" "$stage/src/lib/lib.a/"	# C: compiled (c3 -2), not rma'd
+cp "$c3/lib/lib.a/patmatch.c" "$stage/src/lib/lib.a/"	# likewise
 
 # long (32-bit) integer arithmetic (fseek/scanf reference _ladd/_lcmpr/...)
 mkdir -p "$stage/src/imath"

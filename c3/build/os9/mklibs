@@ -1,6 +1,8 @@
 * mklibs - build the c3 version-2-ABI C libraries on OS-9 (rma/rlink/merge).
 *
-* Mirrors lwbackend/buildlibc.sh (the proven, curated module set).  The lib
+* Mirrors lwbackend/buildlibc.sh (the proven, curated module set), plus the
+* _gs_*/_ss_* getstat/setstat wrappers, strucmp, toupper/tolower and patmatch,
+* which programs such as Carl Kreider's ar need.  The lib
 * sources are staged with the OS-9 syscall/error/stdio symbols already
 * substituted to literals (os9defs.sed/libdefs.sed, as the host build does),
 * so rma needs no `use' of the lwasm-flavoured defs.  chcodes is compiled
@@ -43,7 +45,8 @@ merge write.r read.r open.r create.r misc.r mem.r access.r process.r >s1.l
 merge intercept.r lseek.r dir.r stat.r time.r signal.r cfinish.r profdummy.r syscall.r >s2.l
 merge s1.l s2.l syscommon.r >syslib.l
 
-* ---- strings + stdio + misc (lib.a); chcodes is C, the rest assembler ------
+* ---- strings + stdio + misc (lib.a); chcodes and patmatch are C, the rest
+* assembler ------------------------------------------------------------------
 chd /dd/c3/src/lib/lib.a
 rma strlen.a -o=strlen.r
 rma strncmp.a -o=strncmp.r
@@ -77,12 +80,20 @@ rma calloc.a -o=calloc.r
 rma atoi.a -o=atoi.r
 rma xtoa.a -o=xtoa.r
 c3 -2 -r -o -v=/dd/c3/defs chcodes.c
+rma ss1.a -o=ss1.r
+rma ss2.a -o=ss2.r
+rma gs1.a -o=gs1.r
+rma gs2.a -o=gs2.r
+rma strucmp.a -o=strucmp.r
+rma case.a -o=case.r
+c3 -2 -r -o -v=/dd/c3/defs patmatch.c
 merge strlen.r strncmp.r strncpy.r strncat.r strings.r strass.r strclr.r >m1.l
 merge strcmp.r index.r reverse.r strhcpy.r iob_data.r fopen.r getc.r >m2.l
 merge putc.r puts.r fseek.r setbuf.r fread.r fwrite.r mktemp.r >m3.l
 merge gets.r setbase.r printf.r scanf.r pflinit.r pffdummy.r >m4.l
 merge memory.r calloc.r atoi.r xtoa.r chcodes.r >m5.l
-merge m1.l m2.l m3.l m4.l m5.l >main.l
+merge ss1.r ss2.r gs1.r gs2.r strucmp.r patmatch.r case.r >m6.l
+merge m1.l m2.l m3.l m4.l m5.l m6.l >main.l
 
 * ---- back-end standalones (getpid attach getenv mkstemp, the MC6839 FP
 * helpers fpwrap, and the no-op FP startup fpdummy) ---------------------------
