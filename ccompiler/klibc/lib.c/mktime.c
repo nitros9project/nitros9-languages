@@ -45,7 +45,7 @@ err:return -1L;
 }
 
 
-#if 0
+#ifdef TEST_MAIN
 int
 main (argc, argv)
 int argc;

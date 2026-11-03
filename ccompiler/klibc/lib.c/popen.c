@@ -33,7 +33,7 @@
 static int   _pid[PIPEMAX];
 
 FILE *popen(command, type)
-    const char *command, *type;
+    char *command, *type;
 {
     register char *p = command;
     char *parameter;

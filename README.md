@@ -7,7 +7,8 @@ for [NitrOS-9](https://github.com/nitros9project/nitros9).
 
 - `basic09` — Microware BASIC09 and RunB sources, utilities, and samples
 - `bf` — Brainf*ck interpreter and sample programs
-- `ccompiler` — Microware C compiler, libraries, headers, and sources
+- `ccompiler` — Microware C compiler, libraries, headers, and sources, and
+  the source of Carl Kreider's compatible C library, KLibc (`ccompiler/klibc`)
 - `c3` — C-Cubed, a portable C compiler derived from the Microware one; it
   runs on the build host as a cross compiler and on NitrOS-9 itself
 - `pascal` — archival Pascal materials

@@ -1,5 +1,10 @@
  psect hyp_a,0,0,0,0,0
 
+
+ ifp1
+ use mdefs.a
+ endc
+
 sinh:
  lbsr _dprep
  lbsr SINH
@@ -35,7 +40,7 @@ atanh:
 * SINH
 
 SINH
- lbsr _exp
+ lbsr exp
  bcs SINH1
  pshs y
  leay ,x
@@ -55,7 +60,7 @@ SINH1 rts
 * COSH
 
 COSH
- lbsr _exp
+ lbsr exp
  bcs COSH1
  pshs y
  leay ,x
@@ -76,7 +81,7 @@ COSH1 rts
 * TANH
 
 TANH
- lbsr _exp
+ lbsr exp
  bcs TANH1
  pshs y
  leay ,x
@@ -129,7 +134,7 @@ ASINH0 leay ,x
  lbsr _dadds
  lbsr _dsqrts
  lbsr _dadds
-ASINH1 lbsr _log
+ASINH1 lbsr log
  puls a get sign
  anda #MS
  ora MBC,x
@@ -170,7 +175,7 @@ ACOSH0 leay ,x
  lbsr _dsubs
  lbsr _dsqrts
  lbsr _dadds
-ACOSH1 lbsr _log
+ACOSH1 lbsr log
  clra
  puls y,pc
 
@@ -203,7 +208,7 @@ ATANH
  lbsr _dsubs
  lbsr _ddivs
  bcs ATANH1
- lbsr _log
+ lbsr log
  bcs ATANH1
  ldd MBC,x
  subd #1

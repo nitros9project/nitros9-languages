@@ -1,5 +1,10 @@
  psect trnser_a,0,0,0,0,0
 
+
+ ifp1
+ use mdefs.a
+ endc
+
 * SHIFT TAKES CARE OF THE SHIDT FOR CORDIC
 * SHX=2**-ITER * X
 * y gones

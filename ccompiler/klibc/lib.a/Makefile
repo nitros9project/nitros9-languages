@@ -27,11 +27,15 @@ main.l: $(RFILES1) $(RFILES2) $(RFILES3) $(RFILES4) \
 	merge temp6 temp7 temp8 >-main.l
 	-del temp6 temp7 temp8
 
+# cc1 leaves the .r in the current directory, so move it into $(RDIR).
 .c.r:
-	-del $(RDIR/)asm.tmp
-	$(CC) $(CFLAGS) -Of=$(RDIR/)asm.tmp $<
-	$(RMA) $(RFLAGS) -o=$(RDIR/)$@ $(RDIR/)asm.tmp
-	-del $(RDIR/)asm.tmp
+	$(CC) $(CFLAGS) -r $<
+	-del $(RDIR/)$@
+	copy $@ $(RDIR/)$@
+	del $@
+
+.a.r:
+	$(RMA) $(RFLAGS) $< -o=$(RDIR/)$@
 
 clean:
 	-:del RELs/*.r temp*

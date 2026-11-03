@@ -2,27 +2,32 @@ RFILES1 = lib.c/cstuff.l lib.a/main.l
 RFILE_F	= fmath/cfloats.l
 RFILE_T	= tmath/trans.l
 RFILES2	= imath/math.l sys.a/syslib.l
-MAKEFLAGS	= CC=dcc RMA=c.asm
+MAKEFLAGS	= CC=cc1 RMA=c.asm
+LIB	= /dd/lib
 
 dummy: #dummy1
-	chd lib.c;make $(MAKEFLAGS)
-	chd lib.c;make $(MAKEFLAGS) dbg.l
-	chd lib.a;make $(MAKEFLAGS)
-	chd fmath;make $(MAKEFLAGS)
-	chd tmath;make $(MAKEFLAGS)
-	chd imath;make $(MAKEFLAGS)
-	chd sys.a;make $(MAKEFLAGS)
-	chd sys.a;make $(MAKEFLAGS) cstart.r
-	make $(MAKEFLAGS) clib.l
-	make $(MAKEFLAGS) clibt.l
+	-makdir lib.c/rels
+	-makdir imath/rels
+	-makdir tmath/rels
+	-makdir sys.a/rels
+	chd lib.c;kmake $(MAKEFLAGS)
+	chd lib.c;kmake $(MAKEFLAGS) dbg.l
+	chd lib.a;kmake $(MAKEFLAGS)
+	chd fmath;kmake $(MAKEFLAGS)
+	chd tmath;kmake $(MAKEFLAGS)
+	chd imath;kmake $(MAKEFLAGS)
+	chd sys.a;kmake $(MAKEFLAGS)
+	chd sys.a;kmake $(MAKEFLAGS) cstart.r
+	kmake $(MAKEFLAGS) clib.l
+	kmake $(MAKEFLAGS) clibt.l
 
 clean:
-	cd lib.c; make $(MAKEFLAGS) clean
-	cd lib.a; make $(MAKEFLAGS) clean
-	cd fmath; make $(MAKEFLAGS) clean
-	cd imath; make $(MAKEFLAGS) clean
-	cd tmath; make $(MAKEFLAGS) clean
-	cd sys.a; make $(MAKEFLAGS) clean
+	cd lib.c; kmake $(MAKEFLAGS) clean
+	cd lib.a; kmake $(MAKEFLAGS) clean
+	cd fmath; kmake $(MAKEFLAGS) clean
+	cd imath; kmake $(MAKEFLAGS) clean
+	cd tmath; kmake $(MAKEFLAGS) clean
+	cd sys.a; kmake $(MAKEFLAGS) clean
 	-del clib.l
 	-del clibt.l
 

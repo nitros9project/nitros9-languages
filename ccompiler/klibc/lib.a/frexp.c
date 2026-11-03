@@ -12,7 +12,7 @@ double	x;
 int		*i;
 {
 	register int	j = 0, neg;
-	unsigned char	*cx = &x;
+	char	*cx = &x;
 
 	neg = (*cx & 0x80);		/* check sign bit */
 	if (neg) *cx &= ~0x80;	/* get rid of sign bit */

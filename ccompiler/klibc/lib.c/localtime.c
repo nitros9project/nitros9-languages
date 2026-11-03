@@ -5,11 +5,11 @@ extern unsigned		_mdays[];
 extern unsigned		_myears[];
 static struct tm	_tm;
 
-extern unsigned _isleap(year);
+extern unsigned _isleap();
 
 struct tm *
 gmtime (tp)
-const time_t	*tp;
+time_t	*tp;
 {
 	time_t				ticks = *tp;
 	unsigned			days, ly;
@@ -57,7 +57,7 @@ const time_t	*tp;
 
 struct tm *
 localtime (tp)
-const time_t	*tp;
+time_t	*tp;
 {
 	time_t	tt = *tp + timezone;
 

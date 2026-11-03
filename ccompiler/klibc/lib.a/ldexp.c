@@ -1,7 +1,11 @@
 #include <math.h>
-#include <float.h>
 
 #define DBL_BIAS 128
+
+/* c.prep reads 8 characters of a name, so float.h's DBL_MAX_EXP and
+   DBL_MAX_10_EXP are one macro. */
+#define MAX_BEXP 127
+#define MIN_BEXP (-127)
 
 #ifndef __DCC__
 extern double _huge;
@@ -22,18 +26,18 @@ double x;
 int exp;
 {
 	int i, neg;
-	register unsigned char *cx = &x;
+	register char *cx = &x;
 
 	neg = ((*cx & 0x80));	/* sign bit */
 	cx += 7;				/* skip to exponent byte */
-	i = *cx - DBL_BIAS;		/* get the unbiased exponent */
+	i = (*cx & 0xff) - DBL_BIAS;		/* get the unbiased exponent */
 	i += exp;
 
-	if (i < DBL_MIN_EXP) return 0.;
+	if (i < MIN_BEXP) return 0.;
 #ifndef __DCC__
-	if (i > DBL_MAX_EXP) return neg ? -_huge : _huge;
+	if (i > MAX_BEXP) return neg ? -_huge : _huge;
 #else
-	if (i > DBL_MAX_EXP) return neg ? -HUGE_VAL : HUGE_VAL;
+	if (i > MAX_BEXP) return neg ? -HUGE_VAL : HUGE_VAL;
 #endif
 
 	*cx += exp;				/* set the new exponent */

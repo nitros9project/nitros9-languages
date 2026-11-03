@@ -14,3 +14,5 @@ math.l: $(RFILES1) $(RFILES2) $(RFILES3)
 clean:
 	-:del temp* math.l
 
+.a.r:
+	$(RMA) $(RFLAGS) $< -o=$(RDIR/)$@

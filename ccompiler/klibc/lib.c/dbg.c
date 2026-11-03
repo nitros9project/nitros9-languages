@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 static char  *sp, *_getsp();
+static char  *itoh(), *skipspace();
 static int   callev = 0;
 static char  *lp, line[80];
 static char  *imsg = "-> <";

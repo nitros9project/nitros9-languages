@@ -12,3 +12,5 @@ trans.l: $(RFILES1) $(RFILES2)
 clean:
 	-:del temp* trans.l
 
+.a.r:
+	$(RMA) $(RFLAGS) $< -o=$(RDIR/)$@

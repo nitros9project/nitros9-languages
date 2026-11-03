@@ -61,7 +61,7 @@ static char	*months[] = {
 
 char *
 asctime(tmp)
-const struct tm	*tmp;
+struct tm	*tmp;
 {
 #ifdef ASMOPT
 #asm

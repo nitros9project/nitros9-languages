@@ -1,5 +1,10 @@
  psect log_a,0,0,0,0,0
 
+
+ ifp1
+ use mdefs.a
+ endc
+
 pow:
  lbsr _bdprep
  lbsr YTOX

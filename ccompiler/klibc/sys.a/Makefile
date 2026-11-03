@@ -23,3 +23,6 @@ root.r: root.a
 
 clean:
 	-:del temp* rels/*.r syslib.l
+
+.a.r:
+	$(RMA) $(RFLAGS) $< -o=$(RDIR/)$@
