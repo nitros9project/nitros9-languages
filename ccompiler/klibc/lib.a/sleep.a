@@ -1,0 +1,58 @@
+
+* 08-17-88  Note that sleep calls tsleep and therefore implicitly
+*           returns the ticks remaining.
+*           This hack is to try to get a better fit between sleep
+*           time and the machine it is running on.  To keep from
+*           breaking working code, I have to leave f$tps first.  I
+*           can't see how this is a problem for anybody.
+* 12-24-86  use 10 hz for LI
+
+ psect sleep_a,0,0,3,0,0
+
+f$tps set $25
+*F$NMLink set $21
+
+ vsect
+_tps: rmb 2
+ endsect
+
+sleep: ldd 2,s get count
+ bne slp1 if nonzero count passed
+ ldd #1 default to one tick
+ bra slp2
+
+slp1 pshs d save seconds for later
+ bsr _stps set _tps
+ lbsr ccmult multiply seconds * _tps
+slp2 pshs d
+ lbsr tsleep
+ puls x,pc
+
+_stps: ldd _tps,y get _tps
+ beq setup if zero, find out what it should be, otherwise return it
+ rts
+
+setup os9 f$tps get ticks per second using Carl's syscall
+ bcc stpend
+
+ ldd #SS.Joy set A to 0 (stdin), B to SS.Joy
+ ldx #0
+ pshs y
+ os9 I$GetStt
+ puls y
+ bcs NoJS
+ ldd #60 Guess CoCo or Dragon, assume 60Hz
+ bra stpend
+
+NoJS clra
+ os9 F$ID
+ os9 F$SUser
+ bcc Level2
+ ldd #10 other level 1 machine, 10Hz
+ bra stpend
+
+Level2 ldd #100 other level 2 machine, 100Hz
+stpend std _tps,y
+ rts
+
+ endsect
