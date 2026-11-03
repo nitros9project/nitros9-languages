@@ -1,13 +1,15 @@
 #!/bin/sh
 # mkdsk.sh - build a complete c3-on-NitrOS-9 distribution disk image.
 #
-# Lays out, on one OS-9 image (mounted as the driver's default base /dd):
-#   CMDS/   the cross-built c3 tools  +  the Microware r-utils (rma rlink mold
-#           rdump) that the on-target driver shells out to (ASMBNAME=rma,
-#           LINKNAME=rlink); every module gets the OS-9 execute attribute.
-#   defs/   c3's own v2-ABI headers (NOT CoCoC's - different ABI).
-#   lib/    empty; populated on first boot by `src/mklibs` (build-on-target).
-#   src/    the c3 compiler + library sources, and the mklibs procedure.
+# Lays out, on one OS-9 image (the driver looks for C3/ on /dd, /h0, /d0, /j0):
+#   CMDS/    the cross-built c3 tools  +  the Microware r-utils (rma rlink mold
+#            rdump) that the on-target driver shells out to (ASMBNAME=rma,
+#            LINKNAME=rlink); every module gets the OS-9 execute attribute.
+#   C3/defs/ c3's own v2-ABI headers (NOT CoCoC's - different ABI).
+#   C3/lib/  empty; populated on first boot by `C3/src/mklibs` (build-on-target).
+#   C3/src/  the c3 compiler + library sources, and the mklibs procedure.
+# defs, lib and src live under C3/ so that c3 can share a disk with the
+# Microware C compiler, whose DEFS/ and LIB/ hold files of the same names.
 #
 # Text trees (defs, src) are copied with `os9 dsave -l` so the host's LF line
 # endings become OS-9 CR; command modules are copied binary.
@@ -128,11 +130,12 @@ printf ' psect sysstub_a,0,0,0,0,0\n endsect\n' > "$stage/src/sysstub.a"
 # the on-target library-build procedure
 cp "$here/mklibs" "$stage/src/mklibs"
 
-echo "mkdsk: defs/ + src/ (text, LF->CR)"
-os9 dsave -l -e "$stage" "$DSK,"
+echo "mkdsk: C3/defs/ + C3/src/ (text, LF->CR)"
+os9 makdir "$DSK,C3"
+os9 dsave -l -e "$stage" "$DSK,C3"
 
-# ---- lib: empty, filled in on-target by src/mklibs --------------------------
-os9 makdir "$DSK,lib"
+# ---- lib: empty, filled in on-target by C3/src/mklibs -----------------------
+os9 makdir "$DSK,C3/lib"
 
 # ---- Modules: the MC6839 FP package, where the driver's F$Link/F$Load find it
 os9 makdir "$DSK,Modules"
@@ -147,7 +150,7 @@ fi
 rm -rf "$stage"
 echo "mkdsk: done -> $DSK"
 echo "  CMDS:    c3 c3prep c3comp1 c3comp2 c3optx lorder lsplit make + $RUTILS"
-echo "  defs:    c3 v2-ABI headers"
-echo "  src:     compiler sources + rma-ready library sources (lib/ imath/ back/), mklibs"
-echo "  lib:     (build on-target:  chx /dd/cmds; chd /dd/src; shell </dd/src/mklibs)"
+echo "  C3/defs: c3 v2-ABI headers"
+echo "  C3/src:  compiler sources + rma-ready library sources (lib/ imath/ back/), mklibs"
+echo "  C3/lib:  (build on-target:  chx /dd/cmds; chd /dd/c3/src; shell <mklibs)"
 echo "  Modules: FPO9 (MC6839 floating point)"

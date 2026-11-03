@@ -9,5 +9,5 @@
 #elif defined(sys5)
 #	define DEFDIR "/user/defs"
 #else
-#	define DEFDIR "/dd/defs"
+#	define DEFDIR "/dd/c3/defs"
 #endif

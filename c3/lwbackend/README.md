@@ -77,9 +77,9 @@ float/double arithmetic uses the MC6839 IEEE package (the `FPO9` module from
 `libc3.a`. `crt0` calls `_fpinit`/`_fpterm` in every program, and a program
 **opts in** to floating point at link time:
 
-* host: `c3lw -f`, or pass the driver the on-target spelling `-l=/dd/lib/fp.l`
+* host: `c3lw -f`, or pass the driver the on-target spelling `-l=/dd/c3/lib/fp.l`
   (`c3-ld` maps any `-l=…fp.l` to `fpinit.o`);
-* on OS-9: `c3 -2 prog.c -l=/dd/lib/fp.l` (`mklibs` builds `fp.l`).
+* on OS-9: `c3 -2 prog.c -l=/dd/c3/lib/fp.l` (`mklibs` builds `fp.l`).
 
 Without the opt-in a program gets the no-op `fpdummy`, never links FPO9, and
 any float/double operation calls through a null FPREG. With it, `_fpinit`

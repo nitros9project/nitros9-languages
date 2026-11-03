@@ -50,11 +50,24 @@
 #define LINKNAME "rlink"
 #endif
 
+#ifdef UNIX
+#define DEFS    "/defs"
 #define CSTART  "/lib/cstart.r"
 #define CLIB    "/lib/clib.l"
 #define SYSLIB  "/lib/sys.l"
 #define CLIBN	"/lib/clibn.l"
 #define MATH1	"/lib/math1.l"
+#else
+/* On OS-9 c3 keeps its headers and libraries in c3/ on the system drive, so
+   that they do not collide with the Microware C compiler's defs/ and lib/,
+   which have the same file names but a different ABI. */
+#define DEFS    "/c3/defs"
+#define CSTART  "/c3/lib/cstart.r"
+#define CLIB    "/c3/lib/clib.l"
+#define SYSLIB  "/c3/lib/sys.l"
+#define CLIBN	"/c3/lib/clibn.l"
+#define MATH1	"/c3/lib/math1.l"
+#endif
 
 /* Where the host driver looks for defs/ (and lib/) when $C3BASE is unset.
    The install builds this to match its PREFIX; the fallback is the standard
@@ -409,7 +422,7 @@ int main(int argc, char **argv)
 
 			strcpy(dest, "-v=");
 			strcat(dest, devptr);
-			strcat(dest, "/defs");
+			strcat(dest, DEFS);
 			addarg(dest);
 
 			strcpy(dest, tdirname);	/* tempfile directory */
@@ -903,16 +916,17 @@ sysdrive(void)
 	char probe[32];
 	FILE *f;
 
-	/* Return the drive that actually holds the c3 toolchain - the one whose
-	   cmds/ has the assembler - NOT merely the first that attaches.  The boot
-	   drive (/dd) always attaches but, during development, the toolchain may
-	   live on a slave (/j0); a bare attach-probe wrongly picked the boot drive
-	   and then looked for defs/lib that were not there.  Probe a stable file
-	   present on every c3 disk (cmds/rma) so the right drive is found wherever
-	   it is mounted; opening a path auto-attaches its device. */
+	/* Return the drive that actually holds the c3 toolchain - the one with
+	   c3's headers - NOT merely the first that attaches.  The boot drive
+	   (/dd) always attaches but, during development, the toolchain may live
+	   on a slave (/j0); a bare attach-probe wrongly picked the boot drive and
+	   then looked for defs/lib that were not there.  Probe a stable file
+	   present on every c3 disk (c3/defs/stdio.h) so the right drive is found
+	   wherever it is mounted; opening a path auto-attaches its device. */
 	for (i = 0; devices[i] != 0; i++) {
 		strcpy(probe, devices[i]);
-		strcat(probe, "/cmds/rma");
+		strcat(probe, DEFS);
+		strcat(probe, "/stdio.h");
 		if ((f = fopen(probe, "r")) != NULL) {
 			fclose(f);
 			return devices[i];

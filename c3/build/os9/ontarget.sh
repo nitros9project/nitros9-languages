@@ -4,7 +4,7 @@
 # Boots NitrOS-9 Level 2 for the Pico-Thing under the usim09pt emulator, with
 # the c3 distribution disk's tree laid over a throwaway copy of the boot disk
 # (so it is /dd, the layout mkdsk.sh and mklibs expect), then:
-#   boot 1: chx /dd/cmds; chd /dd/src; shell <mklibs   - build the C libraries
+#   boot 1: chx /dd/cmds; chd /dd/c3/src; shell <mklibs - build the C libraries
 #   boot 2: chd /dd; c3 -2 hello.c; /dd/hello          - compile, link and run
 # hello prints a line and exits with status 5, which the shell reports as
 # "Error #005".  The check passes when both appear on the console.
@@ -70,11 +70,12 @@ for m in c3tree/CMDS/*; do
 	os9 copy -r "$m" "dd.dsk,CMDS/$b"
 	os9 attr -e -pe "dd.dsk,CMDS/$b" >/dev/null
 done
+os9 makdir dd.dsk,C3
 for d in defs src; do
-	os9 makdir "dd.dsk,$d"
-	os9 dsave -e -r "c3tree/$d" "dd.dsk,$d" >/dev/null
+	os9 makdir "dd.dsk,C3/$d"
+	os9 dsave -e -r "c3tree/C3/$d" "dd.dsk,C3/$d" >/dev/null
 done
-os9 makdir dd.dsk,lib
+os9 makdir dd.dsk,C3/lib
 for m in c3tree/Modules/*; do
 	[ -f "$m" ] && os9 copy -r "$m" "dd.dsk,Modules/$(basename "$m")"
 done
@@ -117,7 +118,7 @@ boot() {
 cr=$(printf '\r')
 
 echo "ontarget: boot 1 - building the C libraries with mklibs (a few minutes)"
-boot boot1.log "$cr$cr${cr}chx /dd/cmds${cr}chd /dd/src${cr}shell <mklibs$cr" \
+boot boot1.log "$cr$cr${cr}chx /dd/cmds${cr}chd /dd/c3/src${cr}shell <mklibs$cr" \
     'libraries built|POST-MORTEM'
 if tr -d '\000' < boot1.log | grep -aqE 'error -|Unconditional Abort'; then
 	echo "ontarget: FAIL - rma reported errors building the libraries (boot1.log)" >&2
