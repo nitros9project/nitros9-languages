@@ -9,6 +9,7 @@ the test that confirmed the backend works on real NitrOS-9.
 | `ctest.c` | init-data test — prints one line per init-data path |
 | `ftest.c` | float/double test — constants, `int`→`double`, add and divide (see below) |
 | `putstr.s` | OS-9 `I$Write` helper (`putstr(char*)`; arg in D, Y preserved) |
+| `regcompare.c` | a compare whose right side is already in a register; build with `c3 regcompare.c -f=regcompare` and run on NitrOS-9, expected output in the file |
 | `exitstatus.sh` | the `c3` driver exits non-zero when a stage fails, so `make` stops (runs on the host) |
 | `mktestdisk.sh` | compile + link a test and build a `/j0` disk image with the execute attribute set |
 
