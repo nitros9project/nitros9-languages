@@ -631,20 +631,8 @@ int main(int argc, char **argv)
 	}
 
 	setsuf(outname, 0);
-#ifndef UNIX
-	/* Make outname absolute (in place): rlink silently produces nothing for a
-	   relative -o on OS-9, and the chmod after the link must name the same
-	   file.  Skip if already absolute (a user-given -f=/dd/foo).  Build it in
-	   temp2, NOT dest: dest is the object temp that srcptr points at and tidy()
-	   deletes - clobbering it would make tidy() delete the output instead. */
-	if (outname[0] != '/')
-	{
-		strcpy(temp2, devptr);
-		strcat(temp2, "/");
-		strcat(temp2, outname);
-		strcpy(outname, temp2);
-	}
-#endif
+	/* On OS-9 rlink creates a relative name in the execution directory, like
+	   cc1, and marks the module executable, so the program runs by name. */
 	strcpy(temp1, "-o=");
 	strcat(temp1, outname);
 
@@ -697,12 +685,6 @@ int main(int argc, char **argv)
 	endargs();
 	dstptr = NULL;
 	dofork(linkname, "linker", 0);
-#ifndef UNIX
-	/* mark the linked module executable (r/w/e + public read): rlink does not
-	   set the OS-9 execute attribute itself, so the output was not runnable
-	   without a manual `attr -e'.  outname was made absolute above. */
-	chmod(outname, 15);
-#endif
 
 	tidy();
 

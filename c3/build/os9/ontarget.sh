@@ -5,7 +5,7 @@
 # the c3 distribution disk's tree laid over a throwaway copy of the boot disk
 # (so it is /dd, the layout mkdsk.sh and mklibs expect), then:
 #   boot 1: chx /dd/cmds; chd /dd/c3/src; shell <mklibs - build the C libraries
-#   boot 2: chd /dd; c3 -2 hello.c; /dd/hello          - compile, link and run
+#   boot 2: chd /dd; c3 hello.c; hello                 - compile, link and run
 # hello prints a line and exits with status 5, which the shell reports as
 # "Error #005".  The check passes when both appear on the console.
 #
@@ -130,7 +130,7 @@ tr -d '\000' < boot1.log | grep -aq 'libraries built' || {
 }
 
 echo "ontarget: boot 2 - compiling and running hello.c"
-boot boot2.log "$cr$cr${cr}chd /dd${cr}c3 -2 hello.c${cr}/dd/hello$cr" \
+boot boot2.log "$cr$cr${cr}chd /dd${cr}c3 hello.c${cr}hello$cr" \
     'Error #005|POST-MORTEM'
 if tr -d '\000' < boot2.log | grep -aq 'hello from c3, 2+3=5' &&
    tr -d '\000' < boot2.log | grep -aq 'Error #005'; then
