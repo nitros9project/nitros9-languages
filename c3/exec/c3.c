@@ -69,6 +69,14 @@
 #define MATH1	"/c3/lib/math1.l"
 #endif
 
+/* On OS-9 the single-pass compiler is too big to load, so it is not installed
+   there, and the driver runs the two passes unless told otherwise. */
+#ifdef UNIX
+#define TWOPASS 0
+#else
+#define TWOPASS 1
+#endif
+
 /* Where the host driver looks for defs/ (and lib/) when $C3BASE is unset.
    The install builds this to match its PREFIX; the fallback is the standard
    /usr/local prefix.  (The OS-9 build probes drives instead - see sysdrive.) */
@@ -79,8 +87,9 @@
 direct short
                 kflag, lflag, oflag, tflag, iflag, sflag, nflag, rflag,
                 aflag, mflag, pflag, qflag, gflag, xflag = 0, libcount,
-                term, pid, nocode, twoflag, yflag = 0;
+                term, pid, nocode, yflag = 0;
 direct short    optflag = 1;
+direct short    twoflag = TWOPASS;
 direct int      wstat;
 char           *libs[MAXLIBS];
 char           *snames[MAXARGS];
@@ -470,7 +479,7 @@ int main(int argc, char **argv)
 			} else
 				setsuf(dest, 'a');
 
-			if (twoflag && !nocode)
+			if (twoflag && !nocode && !kflag)
 			{
 				/*
 				 * two-pass: c3comp1 emits the intermediate language
@@ -885,7 +894,7 @@ static char    *cmds[] = {
 	"    -q         Quiet mode. Don't output command names\n",
 	"    -i         Verbose mode. Output exact command executed\n",
 	"    -g         Debug. Echo every sub-command and keep all temp files\n",
-	"    -2         Two-pass (c3comp1+c3comp2; required on OS-9 L2)\n",
+	"    -2         Two-pass (c3comp1+c3comp2; the default on OS-9)\n",
 };
 
 char          **cmdsend = cmds + (sizeof cmds) / (sizeof(char **));
