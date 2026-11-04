@@ -1,4 +1,5 @@
-// primes - Sieve of Eratosthenes up to 50
+PROCEDURE primes
+REM primes - Sieve of Eratosthenes up to 50
 
 DIM I:INTEGER;J:INTEGER;IS_PRIME:BOOLEAN
 

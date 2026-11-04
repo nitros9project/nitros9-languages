@@ -1,4 +1,5 @@
-// fibonacci - Print first 15 Fibonacci numbers
+PROCEDURE fibonacci
+REM fibonacci - Print first 15 Fibonacci numbers
 DIM A:INTEGER;B:INTEGER;C:INTEGER;I:INTEGER
 
 A = 0
