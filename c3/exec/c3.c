@@ -729,9 +729,15 @@ static void dofork(char *s, char *s1, int stat)
 		if ((((unsigned) wstat) >> 8) & 0xff > stat)
 			errexit(wstat);
 #else
-		if (WIFEXITED(wstat) == 1 && WEXITSTATUS(wstat) != 0)
+		/* Pass on the stage's exit code, not the raw wait status: exit(256)
+		   for a stage that exited 1 reaches the shell as 0. */
+		if (WIFEXITED(wstat) && WEXITSTATUS(wstat) != 0)
 		{
-			errexit(wstat);
+			errexit(WEXITSTATUS(wstat));
+		}
+		if (WIFSIGNALED(wstat))
+		{
+			errexit(128 + WTERMSIG(wstat));
 		}
 #endif
 
