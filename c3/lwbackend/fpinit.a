@@ -3,7 +3,7 @@
 * crt0 calls _fpinit after the data area is zeroed / before main, and _fpterm
 * after main returns.  A program opts in to it (over the fpdummy.a no-op) at
 * link time when it uses floating point - host: fpinit.o via c3lw -f or c3-ld
-* -l=...fp.l; OS-9: -l=/dd/lib/fp.l ahead of clib.l.  A program that doesn't
+* -l=...fp.l; OS-9: -l=/dd/c3/lib/fp.l ahead of clib.l.  A program that doesn't
 * opt in gets fpdummy and so never links FPO9.
 *
 * MC6839 module:  name "FPO9", type/language $B1.  Its named entries sit at

@@ -1,6 +1,8 @@
 * mklibs - build the c3 version-2-ABI C libraries on OS-9 (rma/rlink/merge).
 *
-* Mirrors lwbackend/buildlibc.sh (the proven, curated module set).  The lib
+* Mirrors lwbackend/buildlibc.sh (the proven, curated module set), plus the
+* _gs_*/_ss_* getstat/setstat wrappers, strucmp, toupper/tolower and patmatch,
+* which programs such as Carl Kreider's ar need.  The lib
 * sources are staged with the OS-9 syscall/error/stdio symbols already
 * substituted to literals (os9defs.sed/libdefs.sed, as the host build does),
 * so rma needs no `use' of the lwasm-flavoured defs.  chcodes is compiled
@@ -10,12 +12,12 @@
 * `rma x.a' assembles but emits nothing).  And the OS-9 shell truncates long
 * command lines, so the .l libraries are merged in small chunks.
 *
-* Run as:   chx /dd/cmds; chd /dd/src; shell <mklibs
-* Produces: /dd/lib/cstart.r  /dd/lib/clib.l  /dd/lib/sys.l  /dd/lib/fp.l
+* Run as:   chx /dd/cmds; chd /dd/c3/src; shell <mklibs
+* Produces: /dd/c3/lib/cstart.r  /dd/c3/lib/clib.l  /dd/c3/lib/sys.l  /dd/c3/lib/fp.l
 
 * ---- C startup -> cstart.r (the driver links this standalone) ---------------
-chd /dd/src/lib/sys.a
-rma cstart.a -o=/dd/lib/cstart.r
+chd /dd/c3/src/lib/sys.a
+rma cstart.a -o=/dd/c3/lib/cstart.r
 
 * ---- syscall wrappers + finishers (sys.a) ----------------------------------
 rma syscommon.a -o=syscommon.r
@@ -43,8 +45,9 @@ merge write.r read.r open.r create.r misc.r mem.r access.r process.r >s1.l
 merge intercept.r lseek.r dir.r stat.r time.r signal.r cfinish.r profdummy.r syscall.r >s2.l
 merge s1.l s2.l syscommon.r >syslib.l
 
-* ---- strings + stdio + misc (lib.a); chcodes is C, the rest assembler ------
-chd /dd/src/lib/lib.a
+* ---- strings + stdio + misc (lib.a); chcodes and patmatch are C, the rest
+* assembler ------------------------------------------------------------------
+chd /dd/c3/src/lib/lib.a
 rma strlen.a -o=strlen.r
 rma strncmp.a -o=strncmp.r
 rma strncpy.a -o=strncpy.r
@@ -76,17 +79,25 @@ rma memory.a -o=memory.r
 rma calloc.a -o=calloc.r
 rma atoi.a -o=atoi.r
 rma xtoa.a -o=xtoa.r
-c3 -2 -r -o -v=/dd/defs chcodes.c
+c3 -2 -r -o -v=/dd/c3/defs chcodes.c
+rma ss1.a -o=ss1.r
+rma ss2.a -o=ss2.r
+rma gs1.a -o=gs1.r
+rma gs2.a -o=gs2.r
+rma strucmp.a -o=strucmp.r
+rma case.a -o=case.r
+c3 -2 -r -o -v=/dd/c3/defs patmatch.c
 merge strlen.r strncmp.r strncpy.r strncat.r strings.r strass.r strclr.r >m1.l
 merge strcmp.r index.r reverse.r strhcpy.r iob_data.r fopen.r getc.r >m2.l
 merge putc.r puts.r fseek.r setbuf.r fread.r fwrite.r mktemp.r >m3.l
 merge gets.r setbase.r printf.r scanf.r pflinit.r pffdummy.r >m4.l
 merge memory.r calloc.r atoi.r xtoa.r chcodes.r >m5.l
-merge m1.l m2.l m3.l m4.l m5.l >main.l
+merge ss1.r ss2.r gs1.r gs2.r strucmp.r patmatch.r case.r >m6.l
+merge m1.l m2.l m3.l m4.l m5.l m6.l >main.l
 
 * ---- back-end standalones (getpid attach getenv mkstemp, the MC6839 FP
 * helpers fpwrap, and the no-op FP startup fpdummy) ---------------------------
-chd /dd/src/back
+chd /dd/c3/src/back
 rma getpid.a -o=getpid.r
 rma attach.a -o=attach.r
 rma getenv.a -o=getenv.r
@@ -98,16 +109,16 @@ merge getpid.r attach.r getenv.r mkstemp.r fpwrap.r fpdummy.r >back.l
 * ---- fp.l: the real FP startup (_fpinit/_fpterm link the MC6839 FPO9 module).
 * A program that uses floating point links it AHEAD of clib.l, so it resolves
 * cstart's _fpinit/_fpterm before clib.l's no-op fpdummy is reached:
-*     c3 -2 prog.c -l=/dd/lib/fp.l
+*     c3 -2 prog.c -l=/dd/c3/lib/fp.l
 * FPO9 must be resident or in /DD/Modules (mkdsk installs it there). ---------
-rma fpinit.a -o=/dd/lib/fp.l
+rma fpinit.a -o=/dd/c3/lib/fp.l
 
 * ---- integer arithmetic runtime (imath).  cl* = long (32-bit) math used by
 * fseek/scanf; cc*/cshifts = the INT (16-bit) codegen helpers the compiler
 * emits for *, /, %, <<, >> (the 6809 has no native multiply/divide/shift-by-n),
 * needed by any program using them - hello (just +) did not, but real code does;
 * rpterr is the divide-by-zero reporter ccdiv/ccmod call. ------
-chd /dd/src/imath
+chd /dd/c3/src/imath
 rma claddsub.a -o=claddsub.r
 rma clcompare.a -o=clcompare.r
 rma clnegcompl.a -o=clnegcompl.r
@@ -132,13 +143,13 @@ merge ml1.l ml2.l ml3.l >math.l
 * ---- merge the C library.  rlink scans a library in one pass, so a module's
 * providers must follow it; the simplest robust answer is to list the whole
 * set TWICE (clib.l = full + full) so a second pass resolves back references. -
-chd /dd/lib
-merge /dd/src/lib/sys.a/syslib.l /dd/src/lib/lib.a/main.l /dd/src/imath/math.l /dd/src/back/back.l >half.l
+chd /dd/c3/lib
+merge ../src/lib/sys.a/syslib.l ../src/lib/lib.a/main.l ../src/imath/math.l ../src/back/back.l >half.l
 merge half.l half.l >clib.l
 
 * ---- sys.l: a minimal valid ROF (symbols are substituted, so unreferenced) -
-chd /dd/src
-rma sysstub.a -o=/dd/lib/sys.l
+chd /dd/c3/src
+rma sysstub.a -o=/dd/c3/lib/sys.l
 
-echo c3 libraries built in /dd/lib :
-dir /dd/lib
+echo c3 libraries built in /dd/c3/lib :
+dir /dd/c3/lib

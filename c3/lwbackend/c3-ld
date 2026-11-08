@@ -8,9 +8,9 @@
 #
 # crt0 calls _fpinit/_fpterm; the link names exactly one provider.  By default
 # that's fpdummy.o (no-op).  A library argument whose name ends in fp.l (e.g.
-# the on-target spelling -l=/dd/lib/fp.l) opts the program into floating point:
-# fpinit.o instead, whose _fpinit links the MC6839 FPO9 module.  Every other
-# Microware library spec is ignored.
+# the on-target spelling -l=/dd/c3/lib/fp.l) opts the program into floating
+# point: fpinit.o instead, whose _fpinit links the MC6839 FPO9 module.  Every
+# other Microware library spec is ignored.
 #
 # Locates crt0.o / fpdummy.o / fpinit.o / libc3.a / libc3lw.a relative to this
 # script; override with C3LW_HOME.
