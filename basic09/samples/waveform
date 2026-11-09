@@ -50,8 +50,7 @@ ij:=0
 FOR j:=0 TO 10
 cosIndex:=LAND(ij+64,255)
 sinIndex:=LAND(ij,255)
-cosVal:=sinTable(cosIndex)*htrig(j).cosine-sinTable(sinIndex)*htrig
-(j).sine
+cosVal:=sinTable(cosIndex)*htrig(j).cosine-sinTable(sinIndex)*htrig(j).sine
 sum:=sum+h(j).amplitude*cosVal
 ij:=ij+i
 NEXT j
@@ -118,7 +117,7 @@ PARAM wavetable(256):REAL
 DIM i,path:INTEGER; response:STRING[1]
 BASE 0
 
-OPEN #path,"/w":WRITE
+OPEN #path,"/w7":WRITE
 RUN gfx2(path,"DWSET",8,0,0,40,24,0,2,2)
 RUN gfx2(path,"CUROFF")
 RUN gfx2(path,"SELECT")
