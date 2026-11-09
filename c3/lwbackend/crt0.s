@@ -34,6 +34,7 @@
 		extern	_fpinit		; link the MC6839 FP package (fpinit.o when the
 					; program opts in to FP, else the fpdummy.o no-op)
 		extern	_fpterm		; unlink it on exit
+		extern	exit		; flushes the stdio buffers, then F$Exit
 
 ; link-time bounds of the init tables (synthesised by lwlink per os9c3.ld)
 		import	s_irec
@@ -222,8 +223,8 @@ ap_done:
 		lbsr	main		; return value in D
 		leas	2,s		; drop argv
 		lbsr	_fpterm		; unlink the FP module (no-op if it was never linked)
-		clrb			; exit status 0  (B = status)
-		os9	$06		; F$Exit
+		ldd	#0		; exit(0): flush and close the stdio files first,
+		lbsr	exit		; or output not ended by a newline is lost
 
 ; Stack-overflow check.  The compiled prologue does its own `leas` to make
 ; room for locals; _stkcheck only validates there is space.  Stubbed as a
