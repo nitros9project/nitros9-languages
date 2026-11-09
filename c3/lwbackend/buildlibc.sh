@@ -90,6 +90,7 @@ asma memory   "$c3/lib/lib.a/memory.a" io
 asma calloc   "$c3/lib/lib.a/calloc.a"
 asma atoi     "$c3/lib/lib.a/atoi.a"
 asma xtoa     "$c3/lib/lib.a/xtoa.a"		# itoa/utoa (pulled in by mktemp)
+asma case     "$c3/lib/lib.a/case.a"		# toupper/tolower (use _chcodes)
 [ -f "$c3/lib/lib.a/chcodes.c" ] && asmc chcodes "$c3/lib/lib.a/chcodes.c"
 
 echo "archiving libc3.a:" >&2
