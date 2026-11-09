@@ -126,6 +126,11 @@ ok:
 
         if (isdleaf(rhs) || (temp == DREG && isaleaf(rhs))) {
             tranexp(rhs);
+            /* A register may already hold rhs, and a compare needs memory. */
+            if (rhs->op == DREG || rhs->op == XREG) {
+                gen(PUSH, rhs->op, 0, NULL);
+                rhs->op = STACK;
+            }
         } else {
             gen(PUSH, temp, 0, NULL);
             lhs->op=STACK;
