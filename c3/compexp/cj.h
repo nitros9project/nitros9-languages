@@ -41,9 +41,15 @@
 
 #define		MICRO				/* suppresses word boundary forcing */
 #define		DOFLOATS			/*  include floating point code */
+/* On the host a path can be as long as PATH_MAX, and the line that passes the
+   source file name in from the preprocessor must hold all of it. */
+#ifdef UNIX
+#define		FNAMESIZE	1024	/* file name size */
+#define		LINESIZE	(FNAMESIZE + 256)
+#else
 #define		FNAMESIZE	256		/* file name size */
-
 #define		LINESIZE	256
+#endif
 #define		MODNAMSIZE  15	  /* module name */
 
 #define		NAMESIZE	8		/* identifiers for assembler */

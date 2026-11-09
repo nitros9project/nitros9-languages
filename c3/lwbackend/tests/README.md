@@ -12,6 +12,7 @@ the test that confirmed the backend works on real NitrOS-9.
 | `regcompare.c` | a compare whose right side is already in a register; build with `c3 regcompare.c -f=regcompare` and run on NitrOS-9, expected output in the file |
 | `exitstatus.sh` | the `c3` driver exits non-zero when a stage fails, so `make` stops (runs on the host) |
 | `mktestdisk.sh` | compile + link a test and build a `/j0` disk image with the execute attribute set |
+| `longpath.sh` | the `c3` driver compiles with a long C3BASE, `-f=`, `-t=` and source path, and refuses a name too long for its buffers with an error instead of crashing (runs on the host) |
 
 `mktestdisk.sh` takes the test name: `sh mktestdisk.sh` (→ `ctest`) or
 `sh mktestdisk.sh ftest`.

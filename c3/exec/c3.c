@@ -22,8 +22,26 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <limits.h>
 #define vfork fork
 #endif
+
+/* Buffer sizes.  On the host a path can be as long as PATH_MAX, so the path
+   buffers are sized from it; the OS-9 build keeps its small ones.  Every name
+   that comes from outside (C3BASE, -r=, -t=, -f=, -k, the source files) is
+   checked against these before it is copied, and so is the argument list. */
+#ifdef UNIX
+#ifndef PATH_MAX
+#define PATH_MAX	1024
+#endif
+#define NAMELEN		PATH_MAX
+#define ARGLEN		(4 * PATH_MAX)
+#else
+#define NAMELEN		60
+#define ARGLEN		1024
+#endif
+#define DESTLEN		(NAMELEN + 68)
+#define TEMPLEN		(NAMELEN + DESTLEN + 12)
 
 #define version "0.9"
 #define message "C-Cubed: The CoCo C Compiler"
@@ -96,25 +114,25 @@ char           *snames[MAXARGS];
 char            suffs[MAXARGS];
 char           *defines[MAXARGS];
 char            temp[20] = "ctmp.XXXXXX";
-char            temp1[200];
-char            temp2[200];
-char            temp3[200];
+char            temp1[TEMPLEN];
+char            temp2[TEMPLEN];
+char            temp3[TEMPLEN];
 direct char
                *srcptr, *dstptr, *devptr, *vptr, *memsize, *outmname, *edition;
 
 char		*incdirs[32];
 int		inccount = 0;
-char            dest[128];
-char            source[60];
-char            outname[60];
+char            dest[DESTLEN];
+char            source[DESTLEN];
+char            outname[NAMELEN];
 char            alt_comp[10];
 #ifdef UNIX
-char            tdirname[60] = "/tmp/";
+char            tdirname[NAMELEN] = "/tmp/";
 #else
-char            tdirname[60];
+char            tdirname[NAMELEN];
 #endif
-char            odirname[60];	/* .r output directory */
-char            arglst[1024];
+char            odirname[NAMELEN];	/* .r output directory */
+char            arglst[ARGLEN];
 direct int      argsize;
 direct char    *argptr;
 direct int      scount, defcount, rdel;
@@ -137,6 +155,7 @@ static void rmtemp(char *);
 static void setsuf(char *, char);
 static int getsuf(char *);
 static void addarg(char *);
+static void chklen(char *, int, char *);
 static void endargs(void);
 static void opts(void);
 
@@ -232,6 +251,7 @@ int main(int argc, char **argv)
 					rflag = 1;
 					if (*(p + 1) == '=')
 					{
+						chklen(p + 2, NAMELEN - 2, "-r directory");
 						strcpy(odirname, p + 2);
 						strcat(odirname, "/");
 						goto done;
@@ -260,6 +280,7 @@ int main(int argc, char **argv)
 					{
 						p++;
 					}
+					chklen(p, sizeof alt_comp - 1, "-k compiler name");
 					strcpy(alt_comp, p);
 					goto done;
 				case 'e':
@@ -277,6 +298,7 @@ int main(int argc, char **argv)
 				case 'f':
 					if (*++p == '=')
 					{
+						chklen(p + 1, NAMELEN - 1, "-f output name");
 						strcpy(outname, p + 1);
 						if (outname[0] == '\0')
 							goto done;
@@ -299,6 +321,7 @@ int main(int argc, char **argv)
 				case 't':
 					if (*++p == '=')
 					{
+						chklen(p + 1, NAMELEN - 2, "-t directory");
 						strcpy(tdirname, p + 1);
 						strcat(tdirname, "/");
 						if (tdirname[0] == '\0')
@@ -333,6 +356,9 @@ int main(int argc, char **argv)
 				rdel = 1;
 			case 'a':
 			case 'c':
+				if (scount == MAXARGS)
+					error("Too many files");
+				chklen(*argv, NAMELEN - 1, "source file name");
 				suffs[scount] = c;
 				snames[scount] = *argv;
 				++scount;
@@ -354,6 +380,8 @@ int main(int argc, char **argv)
 	{
 		error("Cannot find default system drive");
 	}
+	/* "-v=" + the drive or C3BASE + DEFS has to fit in dest */
+	chklen(devptr, DESTLEN - 16, "C3BASE");
 #ifndef UNIX
 	/* Default the temp-file directory to the system drive, so the .r object
 	   the driver hands to rlink is an ABSOLUTE path: rlink fails silently on
@@ -417,7 +445,7 @@ int main(int argc, char **argv)
 		if (suffs[count] == 'c')
 		{
 			int i;
-			char ilfile[128];
+			char ilfile[DESTLEN];
 
 
 			assdel = 1;
@@ -839,9 +867,21 @@ static void addarg(register char *s)
 {
 	register char  *p = argptr;
 
+	/* room for the space, the argument, and endargs' newline and NUL */
+	if (p + strlen(s) + 3 > arglst + ARGLEN)
+		error("Command line too long", NULL);
+
 	*p++ = ' ';
 	while ((*p++ = *s++) != 0);
 	argptr = p - 1;
+}
+
+/* stop with an error, rather than overflow a buffer, when s is longer
+   than max characters */
+static void chklen(char *s, int max, char *what)
+{
+	if (strlen(s) > max)
+		error("%s too long", what);
 }
 
 static void endargs(void)

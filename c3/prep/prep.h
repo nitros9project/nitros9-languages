@@ -38,10 +38,17 @@ extern int errno;
    typedef'd name parses cleanly; scan() takes its char-getter through this. */
 typedef int (*funcp)();
 
+/* On the host a path can be as long as PATH_MAX, and a line carrying a file
+   name, such as the one passing it to the compiler, must hold all of it. */
+#ifdef UNIX
+#define FNAMSIZE    1024    /* length of file names, incl. include paths */
+#define LINESIZE    (FNAMSIZE + 512)    /* size of line buffer */
+#else
 #define FNAMSIZE    256     /* length of file names, incl. include paths */
+#define LINESIZE    512     /* size of line buffer */
+#endif
 #define NAMESIZE    256     /* length of macro names */
 #define HOLDSIZE    512     /* size of string hold buffer */
-#define LINESIZE    512     /* size of line buffer */
 
 #define MAXARGS     32      /* maximum number of macro arguments */
 #define MAXLIBS		32		/* maximum number of include libraries */
