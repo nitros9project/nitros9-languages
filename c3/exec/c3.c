@@ -69,6 +69,14 @@
 #define MATH1	"/c3/lib/math1.l"
 #endif
 
+/* On OS-9 the single-pass compiler is too big to load, so it is not installed
+   there, and the driver runs the two passes unless told otherwise. */
+#ifdef UNIX
+#define TWOPASS 0
+#else
+#define TWOPASS 1
+#endif
+
 /* Where the host driver looks for defs/ (and lib/) when $C3BASE is unset.
    The install builds this to match its PREFIX; the fallback is the standard
    /usr/local prefix.  (The OS-9 build probes drives instead - see sysdrive.) */
@@ -79,8 +87,9 @@
 direct short
                 kflag, lflag, oflag, tflag, iflag, sflag, nflag, rflag,
                 aflag, mflag, pflag, qflag, gflag, xflag = 0, libcount,
-                term, pid, nocode, twoflag, yflag = 0;
+                term, pid, nocode, yflag = 0;
 direct short    optflag = 1;
+direct short    twoflag = TWOPASS;
 direct int      wstat;
 char           *libs[MAXLIBS];
 char           *snames[MAXARGS];
@@ -470,7 +479,7 @@ int main(int argc, char **argv)
 			} else
 				setsuf(dest, 'a');
 
-			if (twoflag && !nocode)
+			if (twoflag && !nocode && !kflag)
 			{
 				/*
 				 * two-pass: c3comp1 emits the intermediate language
@@ -622,20 +631,8 @@ int main(int argc, char **argv)
 	}
 
 	setsuf(outname, 0);
-#ifndef UNIX
-	/* Make outname absolute (in place): rlink silently produces nothing for a
-	   relative -o on OS-9, and the chmod after the link must name the same
-	   file.  Skip if already absolute (a user-given -f=/dd/foo).  Build it in
-	   temp2, NOT dest: dest is the object temp that srcptr points at and tidy()
-	   deletes - clobbering it would make tidy() delete the output instead. */
-	if (outname[0] != '/')
-	{
-		strcpy(temp2, devptr);
-		strcat(temp2, "/");
-		strcat(temp2, outname);
-		strcpy(outname, temp2);
-	}
-#endif
+	/* On OS-9 rlink creates a relative name in the execution directory, like
+	   cc1, and marks the module executable, so the program runs by name. */
 	strcpy(temp1, "-o=");
 	strcat(temp1, outname);
 
@@ -688,12 +685,6 @@ int main(int argc, char **argv)
 	endargs();
 	dstptr = NULL;
 	dofork(linkname, "linker", 0);
-#ifndef UNIX
-	/* mark the linked module executable (r/w/e + public read): rlink does not
-	   set the OS-9 execute attribute itself, so the output was not runnable
-	   without a manual `attr -e'.  outname was made absolute above. */
-	chmod(outname, 15);
-#endif
 
 	tidy();
 
@@ -729,9 +720,15 @@ static void dofork(char *s, char *s1, int stat)
 		if ((((unsigned) wstat) >> 8) & 0xff > stat)
 			errexit(wstat);
 #else
-		if (WIFEXITED(wstat) == 1 && WEXITSTATUS(wstat) != 0)
+		/* Pass on the stage's exit code, not the raw wait status: exit(256)
+		   for a stage that exited 1 reaches the shell as 0. */
+		if (WIFEXITED(wstat) && WEXITSTATUS(wstat) != 0)
 		{
-			errexit(wstat);
+			errexit(WEXITSTATUS(wstat));
+		}
+		if (WIFSIGNALED(wstat))
+		{
+			errexit(128 + WTERMSIG(wstat));
 		}
 #endif
 
@@ -879,7 +876,7 @@ static char    *cmds[] = {
 	"    -q         Quiet mode. Don't output command names\n",
 	"    -i         Verbose mode. Output exact command executed\n",
 	"    -g         Debug. Echo every sub-command and keep all temp files\n",
-	"    -2         Two-pass (c3comp1+c3comp2; required on OS-9 L2)\n",
+	"    -2         Two-pass (c3comp1+c3comp2; the default on OS-9)\n",
 };
 
 char          **cmdsend = cmds + (sizeof cmds) / (sizeof(char **));

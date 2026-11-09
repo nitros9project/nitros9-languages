@@ -63,6 +63,9 @@ The tool names are overridable: `C3_OPT`, `C3_ASM`, `C3_LINK` (e.g. set them
 back to `rma`/`rlink` on OS-9). `c3-as`/`c3-ld` locate the runtime relative to
 themselves (resolving symlinks); override with `C3LW_HOME`.
 
+On OS-9, `c3 hello.c` puts `hello` in the execution directory, as `cc1` does, so
+that `hello` runs by name. `-f=` with an absolute path puts it elsewhere.
+
 `#include` headers live under `$(C3BASE)/defs`. `make install` in `c3/`
 puts them at `$PREFIX/share/toolshed/defs`
 (`PREFIX` defaults to `/usr/local`), and the driver is built with that as its
