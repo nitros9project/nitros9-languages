@@ -51,6 +51,7 @@ getw: pshs u
  std ,s save ms byte
  cmpd #-1
  beq getw3 if error
+ tfr u,d fp again: getc returned the byte in d
  bsr getc
  cmpd #-1
  beq getw3 if error
