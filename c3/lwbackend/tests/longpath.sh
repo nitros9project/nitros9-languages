@@ -41,6 +41,9 @@ check "long C3BASE"          ok   env C3BASE="$deep" c3 -q good.c -f=good1
 check "long -f= path"        ok   c3 -q good.c -f="$deep/good2"
 check "long -t= directory"   ok   c3 -q good.c -t="$deep" -f=good3
 check "long source path"     ok   c3 -q "$deep/good.c" -f=good4
+for f in good1 "$deep/good2" good3 good4; do
+	[ -f "$f" ] || { echo "FAIL no program $f"; fails=$((fails + 1)); }
+done
 
 # a name longer than any path the host allows is refused, not overflowed
 huge=$(printf '%05000d' 0)
