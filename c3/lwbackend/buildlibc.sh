@@ -63,6 +63,7 @@ asma getpid "$here/getpid.a"		# standalone (vs all of id.a)
 asma attach "$here/attach.a"		# I$Attach/I$Detach wrappers (not in stock lib)
 asma getenv "$here/getenv.a"		# environment stub (no OS-9 environ)
 asma mkstemp "$here/mkstemp.a"		# mkstemp -> mktemp (not in stock lib)
+asma setjmp "$here/setjmp.a"		# standalone (the stock csect form does not filter)
 
 echo "stdio (lib.a):" >&2
 # stdio routines: the FILE struct offsets/flags are substituted as literals

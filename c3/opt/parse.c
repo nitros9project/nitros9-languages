@@ -15,8 +15,8 @@ register char *s,*p;
             size = LABELSIZE;
             if (*p == ' ' || *p == '\t') break;
             *s++ = *p++;
-            while (--size && isalnum(*p)) *s++ = *p++;
-            while (isalnum(*p)) ++p;
+            while (--size && (isalnum(*p) || *p == '_')) *s++ = *p++;
+            while (isalnum(*p) || *p == '_') ++p;
             if (*globflag = *p == ':') ++p;
             break;
         case MNEM:

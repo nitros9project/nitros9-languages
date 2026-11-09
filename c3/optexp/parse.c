@@ -18,9 +18,9 @@ char *parse(int type, register char *s, register char *p, int *globflag)
 		if (*p == ' ' || *p == '\t')
 			break;
 		*s++ = *p++;
-		while (--size && isalnum(*p))
+		while (--size && (isalnum(*p) || *p == '_'))
 			*s++ = *p++;
-		while (isalnum(*p))
+		while (isalnum(*p) || *p == '_')
 			++p;
 		if ( (*globflag = (*p == ':')) )
 			++p;

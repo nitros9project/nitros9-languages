@@ -1,0 +1,30 @@
+* setjmp.a - setjmp and longjmp for the OS-9 backend.
+* Matches lib/lib.a/setjmp.a, with the jmp_buf offsets as equates, since its
+* csect does not get through c3lw.awk.  env arrives in D, per the c3 v2 ABI.
+ psect setjmp_a,0,0,1,0,0
+
+his_sp   equ 0 caller's sp
+his_ret  equ 2 caller's return addr
+his_reg  equ 4 caller's register var
+his_stat equ 6 caller's static ptr
+
+setjmp: tfr d,x get env addr
+ ldd ,S get return addr
+ std his_ret,X save in env
+ sty his_stat,X save static ptr
+ stu his_reg,X save register var
+ sts his_sp,X save stack ptr
+ clra return ok
+ clrb
+ rts
+
+longjmp: tfr d,x get env addr
+ ldy his_stat,X get static ptr
+ ldu his_reg,X get register var
+ ldd 2,S get return value
+ bne longjmp1 if some value
+ ldb #1 force a value
+longjmp1 lds his_sp,X get new stack ptr
+ leas 2,S clean off return
+ jmp [his_ret,X] go there
+ endsect
