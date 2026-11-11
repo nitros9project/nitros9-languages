@@ -5,3 +5,14 @@ If you want to run it under real OS9 remember to change NL to CR for
 the text files CMDS/PascalErrs, PascalDefs and optionally Dumpreal.
 
 Some of these files are Pascal PCODE and hence can't be disassembled.
+
+The native modules in cmds (Pascal, PascalN, PascalS, PascalE,
+PascalT.MODL, Support, Support1 and Support2) are copied from the
+Dragon 64 distribution disks; their CRCs match CRCLIST. The .asm files
+beside them are disassemblies of the same modules that do not assemble
+(data is decoded as code and some labels are lost), so use the modules.
+
+Compile with "pascal <prog.pas #20K", which writes the P-code to PCODEF,
+and run it with "pascaln pcodef" or "pascals pcodef". Pascal reads
+Pascal_Compiler from the current data directory, so copy it there.
+Support and PascalErrs go in the execution directory.
