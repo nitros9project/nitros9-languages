@@ -25,8 +25,9 @@ struct sgbuf { /* structure for 'getstat()' and 'setstat()' */
         sg_bellch,      /* line overflow character (bell) */
         sg_parity,      /* device initialisation (parity) */
         sg_baud;        /* baud rate */
-   int  sg_d2p,         /* offset to second device name string */
-        sg_stn;         /* offset to status routine name */
+   int  sg_d2p;         /* offset to second device name string */
+   char sg_xon,         /* x-on character */
+        sg_xoff;        /* x-off character */
    char sg_err;         /* most recent error status */
    char sg_spare[5];    /* spare bytes - necessary for correct sizing */
 };
