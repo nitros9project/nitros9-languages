@@ -62,3 +62,15 @@ s/E\$Read/\$F4/g
 s/E\$Write/\$F5/g
 s/E\$NotRdy/\$F6/g
 s/E\$Seek/\$F7/g
+
+# ---- get/set status codes (SS.), used by gs2.a and ss1.a.  Only as an
+# immediate operand: chmod.a defines its own SS.FD with equ. ----
+s/#SS\.Opt/#\$00/g
+s/#SS\.Ready/#\$01/g
+s/#SS\.Reset/#\$03/g
+s/#SS\.EOF/#\$06/g
+s/#SS\.DevNm/#\$0E/g
+s/#SS\.FD/#\$0F/g
+s/#SS\.Ticks/#\$10/g
+s/#SS\.SSig/#\$1A/g
+s/#SS\.Relea/#\$1B/g

@@ -90,6 +90,15 @@ asma memory   "$c3/lib/lib.a/memory.a" io
 asma calloc   "$c3/lib/lib.a/calloc.a"
 asma atoi     "$c3/lib/lib.a/atoi.a"
 asma xtoa     "$c3/lib/lib.a/xtoa.a"		# itoa/utoa (pulled in by mktemp)
+asma case     "$c3/lib/lib.a/case.a"		# toupper/tolower (use _chcodes)
+asma findstr  "$c3/lib/lib.a/findstr.a"	# findstr (substring position)
+asma skip     "$c3/lib/lib.a/skip.a"		# skipbl/skipwd
+asma memset   "$c3/lib/lib.a/memset.a"
+asma strnucmp "$c3/lib/lib.a/strnucmp.a"	# case-blind strncmp
+asma system   "$c3/lib/lib.a/system.a"		# run a command line with the shell
+asma gs2      "$c3/lib/lib.a/gs2.a"		# _gs_rdy/_gs_opt/_gs_eof/_gs_devn/_gs_gfd
+asma ss1      "$c3/lib/lib.a/ss1.a"		# _ss_opt/_ss_rel/_ss_ssig/_ss_rest/_ss_pfd/_ss_tiks
+asmc getopt   "$c3/lib/lib.c/getopt.c"
 [ -f "$c3/lib/lib.a/chcodes.c" ] && asmc chcodes "$c3/lib/lib.a/chcodes.c"
 
 echo "archiving libc3.a:" >&2
