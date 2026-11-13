@@ -231,7 +231,7 @@ fprintf(stderr,
         case PLUS:
             ot("add");
 simple:
-            doref(reg,arg,val,0);
+            doref(reg,arg,(argword)val,0);
             return;
         case LOADIM:
             if (arg == NODE) {
@@ -250,7 +250,7 @@ simple:
                 }
             }
             ot("lea");
-            doref(reg,arg,val,0);
+            doref(reg,arg,(argword)val,0);
             return;
         case EXG:
             fprintf(code," exg %c,%c\n",reg,regname(arg));
@@ -262,7 +262,7 @@ simple:
                     os("d,");
                     goto leaexit;
                 case CONST:
-                    od(val);
+                    od(ARGINT(val));
                     ob(',');
 leaexit:
                     ob(reg);
@@ -446,12 +446,12 @@ void trouble(register int op, register int arg, register expnode *val)
             if (cflag) {
                 if(op == AND) ol(clra);
                 ot(s);
-                doref('b',arg,val,0);
+                doref('b',arg,(argword)val,0);
             } else {
                 ot(s);
-                doref('a',arg,val,0);
+                doref('a',arg,(argword)val,0);
                 ot(s);
-                doref('b',arg,val,1);
+                doref('b',arg,(argword)val,1);
             }
             break;
         case CONST:

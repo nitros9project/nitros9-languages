@@ -245,6 +245,7 @@ int isop(void)
 expnode *getcast(void)
 {
     expnode *ptr;
+    symnode *name;
     dimnode *dptr;          /* settype writes a dimnode * here, not an expnode * */
     elem *dummy;            /* settype writes an elem * here; ignored by a cast */
     long size;              /* settype writes a long here: an int would be
@@ -260,12 +261,12 @@ expnode *getcast(void)
         error("undefined struct");
         ptr = NULL;
     } else {
-        type = declarator(&ptr,&dptr,type);
+        type = declarator(&name,&dptr,type);
         clear(&arglist);
-        if (ptr) error("name in a cast");
+        if (name) error("name in a cast");
         ptr = newnode(CAST,0,0,0,lno,errpnt);
         ptr->type = type;
-        sizeup(ptr,dptr,size);
+        sizeupfields(ptr->type,&ptr->size,&ptr->dimptr,dptr,size);
     }
     return ptr;
 }

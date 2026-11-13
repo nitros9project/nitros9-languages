@@ -564,7 +564,7 @@ void block(int stkadj)
 		while (initlist) {              /* local initialisers -> IL_EXPR */
 			i = initlist;
 			p = i->initp;
-			p = newnode(NAME,0,0,i->initname,p->lno,p->pnt);
+			p = newnode(NAME,0,0,(argword)i->initname,p->lno,p->pnt);
 			p = newnode(ASSIGN,p,i->initp,0,p->lno,p->pnt);
 			ilwrec(IL_EXPR); ilweol();
 			ilexpr(p);
@@ -590,7 +590,7 @@ void block(int stkadj)
 	while (initlist) {
 		i = initlist;
 		p = i->initp;
-		p = newnode(NAME,0,0,i->initname,p->lno,p->pnt);
+		p = newnode(NAME,0,0,(argword)i->initname,p->lno,p->pnt);
 		p = newnode(ASSIGN,p,i->initp,0,p->lno,p->pnt);
 		reltree(tranexp(optim(p)));
 		i = i->initnext;
@@ -900,7 +900,8 @@ int declarator(symnode **ptr, dimnode **dptr, int bastype)
 {
 	register dimnode *tempdim, *p, *p1;
 	int dtype, savmos, count;
-	auto dimnode *dummy;
+	auto symnode *dummy;
+	dimnode *lastdim;
 
 	*ptr = NULL;
 	dtype = 0;
@@ -923,7 +924,7 @@ int declarator(symnode **ptr, dimnode **dptr, int bastype)
 	if (sym == LPAREN) {
 		dtype = (dtype<<2) + FUNCTION;
 		if (blklev) {
-			declist((symnode **)&dummy);
+			declist(&dummy);
 			clear(&dummy);
 		} else declist(&arglist);
 	} else {
@@ -945,9 +946,9 @@ int declarator(symnode **ptr, dimnode **dptr, int bastype)
 		}
 		mosflg = savmos;
 		if (tempdim) {
-			if (dummy = *dptr) {
-				while (dummy->dptr) dummy = dummy->dptr;
-				dummy->dptr = tempdim;
+			if (lastdim = *dptr) {
+				while (lastdim->dptr) lastdim = lastdim->dptr;
+				lastdim->dptr = tempdim;
 			} else {
 				p->dptr = NULL;
 				*dptr = tempdim;
@@ -1011,7 +1012,7 @@ static symnode *protoargs(symnode *list)
 			if ((pp >= hashtab && pp < hashtab + 128)
 					|| (pp >= mostab && pp < mostab + 128)) {
 				if (*pp == s) *pp = s->hlink;
-				else { for (p = *pp; p->hlink != s; p = p->hlink) ; p->hlink = s->hlink; }
+				else { for (p = *pp; p->hlink != s; p = p->hlink) { } p->hlink = s->hlink; }
 				s->hlink = freesym; freesym = s;
 			} else
 				pullup(s);	/* restore the symbol it shadowed */

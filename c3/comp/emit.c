@@ -119,7 +119,7 @@ void defcon(register int *p, int n)
     register int i;
 
     defword();
-    if (n == 1) od(p);
+    if (n == 1) od(ARGINT(p));
     else if (p == NULL) {
         for (i = 1; i++ < n; ) os("0,");
         ob('0');

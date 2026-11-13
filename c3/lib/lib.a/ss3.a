@@ -21,4 +21,4 @@ _ss_wtrk: pshs Y,U
  puls Y,U
  lbra _sysret
 
- ends
+ endsect

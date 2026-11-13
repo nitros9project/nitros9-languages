@@ -30,4 +30,4 @@ common2 stx _flacc,Y top half
  stu 2,X bottom half
  puls U,PC
 
- ends
+ endsect

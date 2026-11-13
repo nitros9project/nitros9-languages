@@ -488,7 +488,7 @@ retlong:
 
     /* here all types still possible; collect in 8 byte integer */
     while (isdigit(curch)) {
-        if (addin(&n,curch)) { /* overflow */
+        if (addin((char *)&n,curch)) { /* overflow */
             getch();
             return 0;
         }
@@ -504,7 +504,7 @@ retlong:
             getch();
 fraction:
             while (isdigit(curch)) {
-                if (addin(&n,curch)) { /* overflow */
+                if (addin((char *)&n,curch)) { /* overflow */
                     getch();
                     return 0;
                 }
@@ -513,7 +513,7 @@ fraction:
             }
         }
 
-        n = normaliz(&n);
+        n = normaliz((char *)&n);
 
         if (curch=='E' || curch=='e') {
             esign=1;

@@ -217,7 +217,7 @@ void finddupl(register instruction *i)
 		/* travel down reference list */
 		for (rlp1 = lbp->rlist; rlp1; rlp1 = rlp1->succ)
 		{
-			ip1 = rlp1->pred;
+			ip1 = (instruction *)rlp1->pred;
 			/* is reference labeled code-break, not blocked ? */
 			if (ip1->llist
 			    && (ip1->itype & CODEBRK)
@@ -230,12 +230,12 @@ void finddupl(register instruction *i)
 				rlp2 = newchain();
 				rlp2->succ = lmovp;
 				lmovp = rlp2;
-				lmovp->pred = ip1;
+				lmovp->pred = (chain *)ip1;
 			}
 		}
 	while (lmovp)
 	{
-		movlab(ip1 = lmovp->pred, i);
+		movlab(ip1 = (instruction *)lmovp->pred, i);
 		if ((chain *)(ip1 = ip1->pred) != &ilist && (ip1->itype & BRANCH))
 		{
 			if (ip1->itype & CODEBRK)
@@ -254,7 +254,7 @@ void finddupl(register instruction *i)
 		for (lbp = i->llist; lbp; lbp = lbp->nextl)
 			/* travel down reference list */
 			for (rlp1 = lbp->rlist; rlp1; rlp1 = rlp1->succ)
-				if ((ip1 = rlp1->pred)->itype & CODEBRK)
+				if ((ip1 = (instruction *)rlp1->pred)->itype & CODEBRK)
 
 					/*
 					 * match code before branches to
@@ -383,7 +383,7 @@ void duplrefs(label *lbp, instruction *ip)
 	for (; lbp; lbp = lbp->nextl)
 		/* travel down reference list */
 		for (rlp = lbp->rlist; rlp; rlp = rlp->succ)
-			if (((ip1 = rlp->pred)->itype & CODEBRK)
+			if (((ip1 = (instruction *)rlp->pred)->itype & CODEBRK)
 			    && (ip1->itype & BLOCKDUP) == 0
 			    && duplsrch(ip1->pred, ip->pred))
 				break;

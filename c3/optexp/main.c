@@ -257,10 +257,10 @@ void optimise(void)
 			if (*mnem)
 			{
 				parse(ARGS, args, p, &globflag);
-				if (insins(&ilist, mnem, args, &l))
+				if (insins((instruction *)&ilist, mnem, args, &l))
 				{
-					optim(ilist.pred);
-					finddupl(ilist.pred);
+					optim((instruction *)ilist.pred);
+					finddupl((instruction *)ilist.pred);
 				}
 				++inserts;
 				if (inscount >= insmax)
@@ -270,7 +270,7 @@ void optimise(void)
 	}
 
 	if (l)
-		insins(&ilist, "nop", "", &l);
+		insins((instruction *)&ilist, "nop", "", &l);
 	endsect();
 	while (inscount)
 		rminst();

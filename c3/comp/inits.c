@@ -71,7 +71,7 @@ void initialise(register symnode *ptr, int tsc, int type)
         getsym();
     }
 
-    if (type == STRUCT) ilist(type,ptr,ptr->x.elems,0);
+    if (type == STRUCT) ilist(type,ptr,(dimnode *)ptr->x.elems,0);
     else if (isary(type)) ilist(type,ptr,ptr->dimptr,0);
     else if (ilist(type,ptr,ptr->dimptr,1)) ;
     else iskip();
@@ -207,7 +207,7 @@ err:
             case EXTERND:
                 defword();
                 datflag = 1;
-                deref(NODE,p2,addon);
+                deref(NODE,(argword)p2,addon);
                 datflag = 0;
                 nl();
         }
@@ -248,7 +248,7 @@ static void datdef(register int *p, int type)
     switch (type) {
         case CHAR:
             defbyte();
-            od(p);
+            od(ARGINT(p));
             nl();
             return;
         case INT:

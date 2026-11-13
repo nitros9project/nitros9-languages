@@ -31,10 +31,10 @@ label          *inslabel(char *s)
 	strcpy(p->lname, s);
 
 	/* put at back of list */
-	p->succ = (int *)l;
-	p->pred = l->pred;
+	p->succ = (label *)l;
+	p->pred = (label *)l->pred;
 	((instruction *) (l->pred))->succ = (instruction *)p;
-	l->pred = p;
+	l->pred = (chain *)p;
 
 	return p;
 }
@@ -47,7 +47,7 @@ label          *findlabel(char *s)
 	l = &ltable[hash(s)];
 
 
-	for (p = l->succ; (chain *)p != l;)
+	for (p = (label *)l->succ; (chain *)p != l;)
 	{
 		if (strcmp(s, p->lname) == 0)
 			return p;
@@ -92,7 +92,7 @@ void freelabel(register label *p)
 		((instruction *) (p->pred))->succ = (instruction *)p->succ;
 		((instruction *) (p->succ))->pred = (instruction *)p->pred;
 		/* add to free list */
-		p->succ = (int *)lfree;
+		p->succ = lfree;
 		lfree = p;
 	}
 }

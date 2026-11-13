@@ -48,8 +48,12 @@ void doerr(int n, char errstr[], int lno, int ertype)
 }
 
 
-/* arg/arg1: most callers pass strings (%s); NEWLINO passes an int line
-   number, round-tripping through the low word for the "%d" case */
+void putlineno(int n)
+{
+	if (!aflag) fprintf(outfp, "%c%c\n%d\n", ESCHAR, NEWLINO, n);
+}
+
+/* Escape records with string payloads. */
 void putesc(int type, char *arg, char *arg1)
 {
 	if (!aflag)
@@ -60,9 +64,6 @@ void putesc(int type, char *arg, char *arg1)
 		case OLDFNAME:
 		case PSECT:
 			fprintf(outfp, "%c%c\n%s\n%s\n", ESCHAR, type, arg, arg1);
-			break;
-		case NEWLINO:
-			fprintf(outfp,"%c%c\n%d\n",ESCHAR,type,arg);
 			break;
 		default:
 			fprintf(outfp,"%c%c\n%s\n",ESCHAR,type,arg);

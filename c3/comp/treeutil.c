@@ -121,12 +121,13 @@ int constop(int op, int r, int l)
     }
 }
 
-/* compute and record the size of a symbol's declared type */
-int sizeup(register symnode *ptr, register dimnode *dimptr, long size)
+/* Compute a declared type's size without depending on a node's layout. */
+int sizeupfields(int type, long *nodesize, dimnode **nodedims,
+                 register dimnode *dimptr, long size)
 {
-    register int n,temp;
+    register int n;
 
-    switch (btype(temp = ptr->type)) {
+    switch (btype(type)) {
         case CHAR:      n = 1; break;
         case INT:
         case UNSIGN:    n = INTSIZE; break;
@@ -139,9 +140,15 @@ int sizeup(register symnode *ptr, register dimnode *dimptr, long size)
         case STRUCT:    n = size; break;
         case USTRUCT:   n = 0; break;
     }
-    ptr->size = n ? n : size;
+    *nodesize = n ? n : size;
+    *nodedims = dimptr;
+    return getsize(type,n,dimptr);
+}
 
-    return getsize(temp,n,ptr->dimptr = dimptr);
+/* Compute and record the size of a symbol's declared type. */
+int sizeup(register symnode *ptr, dimnode *dimptr, long size)
+{
+    return sizeupfields(ptr->type,&ptr->size,&ptr->dimptr,dimptr,size);
 }
 
 int getsize(int t, int size, register dimnode *dptr)

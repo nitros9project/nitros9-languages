@@ -241,7 +241,7 @@ done: ;
 		{
 		     /*   if line number changed */
 			nxtlno = lineno - 1;        /*   tell the compiler */
-			putesc(NEWLINO, (char *) nxtlno, 0);
+			putlineno(nxtlno);
 		}
 		fprintf(outfp, "%s\n", line);     /*   write out expanded line */
 		if (ferror(stdout))

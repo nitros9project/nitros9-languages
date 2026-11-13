@@ -137,7 +137,7 @@ int newline(void)
 			strcpy(modname,inclptr->modname);
 			inclptr = inclptr->next;
 			putesc(NEWFNAME,filename,modname);
-			putesc(NEWLINO,(char *) lineno,0);
+			putlineno(lineno);
 		} else return 0;
 	}
 }

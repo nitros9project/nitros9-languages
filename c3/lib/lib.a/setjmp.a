@@ -15,7 +15,7 @@ his_sp   rmb 2 caller's sp
 his_ret  rmb 2 caller's return addr
 his_reg  rmb 2 caller's register var
 his_stat rmb 2 caller's static ptr
- ends
+ endsect
 
 
 setjmp: tfr d,x get env addr
@@ -40,6 +40,6 @@ longjmp1 lds his_sp,X get new stack ptr
  jmp [his_ret,X] go there
 
 
- ends
+ endsect
 
  end
