@@ -78,6 +78,9 @@ typedef long argword;
 typedef int argword;
 #endif
 
+/* Recover an integer operand transported in a pointer-shaped slot. */
+#define ARGINT(x) ((int)(argword)(x))
+
 #define		MICRO				/* suppresses word boundary forcing */
 #define		DOFLOATS			/*  include floating point code */
 /* On the host a path can be as long as PATH_MAX, and the line that passes the

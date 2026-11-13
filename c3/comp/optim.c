@@ -453,7 +453,7 @@ strcommon:
 				sptr->dimptr = NULL;
 				sptr->storage = EXTERN;
 				sptr->blklev = 0;
-				move(sptr,lhs,6);
+				move((char *)sptr,(char *)lhs,6);
 				t = INT;
 			} else {
 				terror(lhs,"not a function");
@@ -925,7 +925,7 @@ int tymatch(register expnode *lhs, register expnode *rhs)
 	else return INT;
 }
 
-expnode *fixup(int size, int t, register expnode *dptr, register expnode *rhs)
+expnode *fixup(int size, int t, register dimnode *dptr, register expnode *rhs)
 {
 	register expnode *ptr;
 
@@ -1013,7 +1013,7 @@ int chkstrct(register expnode *node)
 
 void makedummy(register expnode *node)
 {
-	move(&sdummy,node,6);
+	move((char *)&sdummy,(char *)node,6);
 	node->sux = 1;
 	reltree(node->left);
 	reltree(node->right);
@@ -1034,7 +1034,7 @@ int isint(int t)
 	return 0;
 }
 
-void integerr(int node)
+void integerr(expnode *node)
 {
 	terror(node,"must be integral");
 }

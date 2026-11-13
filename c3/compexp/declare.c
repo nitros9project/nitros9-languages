@@ -526,7 +526,7 @@ void newfunc(symnode *fptr, int sclass)
 		if (dflag)
 		{
 			printf("newfunc node:\n");
-			pnode(p1);
+			pnode((expnode *)p1);
 		}
 #endif
 		switch (p1->type)

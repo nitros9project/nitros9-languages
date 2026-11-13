@@ -93,7 +93,7 @@ void doinclude(void)
 					putesc(NEWFNAME, filename, modname);
 					inclptr = nptr;
 				
-					putesc(NEWLINO, 0, 0);
+					putlineno(0);
 					setline(lineno = 0);
 					in = fp;
 					return;

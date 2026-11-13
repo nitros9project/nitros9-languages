@@ -42,4 +42,4 @@ ss1 ldx 2,S get buf, or parm
 ss2 os9 I$SetStt
  lbra _sysret
 
- ends
+ endsect

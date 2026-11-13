@@ -202,6 +202,7 @@ extern void error(char *);
 extern void lerror(char *);
 extern void doerr(int, char *, int, int);
 extern void putesc(int, char *, char *);
+extern void putlineno(int);
 extern int hash(char *);
 extern char *grab(unsigned);
 extern char *copystr(char *, char *, int);

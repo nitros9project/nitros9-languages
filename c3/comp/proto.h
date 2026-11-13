@@ -202,7 +202,7 @@ void eputs(char *);
 void eputchar(int);
 void reltree(expnode *);
 void release(expnode *);
-void nodecopy(char *, char *);
+void nodecopy(expnode *, expnode *);
 int istype(void);
 int issclass(void);
 int decref(int);
@@ -225,14 +225,14 @@ void chknull(expnode *);
 int usual(expnode *);
 int cvt(expnode *, int);
 int tymatch(expnode *, expnode *);
-expnode *fixup(int, int, expnode *, expnode *);
+expnode *fixup(int, int, dimnode *, expnode *);
 void needlval(expnode *, int);
 void chkdecl(expnode *);
 int needmos(expnode *, int *, int *);
 int chkstrct(expnode *);
 void makedummy(expnode *);
 int isint(int);
-void integerr(int);
+void integerr(expnode *);
 
 /* regscont.c */
 void clrconts(void);
@@ -292,6 +292,7 @@ int isreg(int);
 expnode *newnode(int, expnode *, expnode *, argword, int, char *);
 int constop(int, int, int);
 int sizeup(symnode *, dimnode *, long);
+int sizeupfields(int, long *, dimnode **, dimnode *, long);
 int getsize();           /* def's int size param is fed a long at call sites;
                             empty parens preserve the original (uncoerced) push */
 int arity(int);

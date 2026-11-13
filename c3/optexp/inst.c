@@ -163,7 +163,7 @@ void insref(instruction *ip, label *lp)
 	register chain *rlp;
 
 	rlp = newchain();
-	rlp->pred = ip;
+	rlp->pred = (chain *)ip;
 	rlp->succ = lp->rlist;
 	lp->rlist = rlp;
 }
@@ -191,7 +191,7 @@ void rminst(void)
 	register instruction *i;
 	label          *l;
 
-	if ((chain *)(i = ilist.succ) == &ilist)
+	if ((chain *)(i = (instruction *)ilist.succ) == &ilist)
 		error("removing too many instructions", NULL, NULL, NULL);
 
 	if ((i->itype & LONGBRA) == LONGBRA)
@@ -291,7 +291,7 @@ void remins(register instruction *i)
 		remref(i, i->alt.lab);
 	}
 	else
-		freearg(i->alt.args);
+		freearg((chain *)i->alt.args);
 	for (l = i->llist; l; l = l->nextl)
 	{			/* return labels */
 		l->dest = NULL;
@@ -316,7 +316,7 @@ void remref(instruction *ip, label *lp)
 	{
 		lastrlp = (chain *) & lp->rlist;
 		for (; (rlp = lastrlp->succ) != NULL; lastrlp = rlp)
-			if (rlp->pred == ip)
+			if (rlp->pred == (chain *)ip)
 			{
 				lastrlp->succ = rlp->succ;
 				freelabel(lp);

@@ -90,7 +90,7 @@ newname(char *name)
        rp->n_next = (struct name *)0;
        rp->n_name = cp;
        rp->n_line = (struct line *)0;
-       rp->n_impl = (struct line *)0;
+       rp->n_impl = (char *)0;
        rp->n_time = (time_t)0;
        rp->n_flag = def_flags;
 

@@ -206,10 +206,10 @@ touch(struct name *np)
        if (domake)
        {
 #ifdef unix
-               long            a[2];
+               struct utimbuf  a;
 
-               a[0] = a[1] = time(0);
-               if (utime(np->n_name, &a[0]) < 0)
+               a.actime = a.modtime = time(0);
+               if (utime(np->n_name, &a) < 0)
                        printf("%s: '%s' not touched - non-existent\n",
                                        myname, np->n_name);
 #endif

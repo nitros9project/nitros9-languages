@@ -55,4 +55,4 @@ _gs_gfd:
  puls Y
 gs4 lbra _sysret
 
- ends
+ endsect

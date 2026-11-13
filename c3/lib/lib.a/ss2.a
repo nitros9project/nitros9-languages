@@ -40,4 +40,4 @@ ss2 ldx 4,S
  puls U
  lbra _sysret
 
- ends
+ endsect

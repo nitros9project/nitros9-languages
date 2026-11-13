@@ -19,7 +19,7 @@ void pushdown(register symnode *sptr)
     if (nptr = freedown) freedown = nptr->snext;
     else nptr = (symnode *) grab(DOWNSIZE);
 
-    move(sptr,nptr,DOWNSIZE);
+    move((char *)sptr,(char *)nptr,DOWNSIZE);
     sptr->downptr = nptr;
 	sptr->type = 0;
 	sptr->size = 0;
@@ -38,7 +38,7 @@ void pullup(register symnode *sptr)
     register symnode *nptr;
 
     nptr = sptr->downptr;
-    move(nptr,sptr,DOWNSIZE);
+    move((char *)nptr,(char *)sptr,DOWNSIZE);
 
     nptr->snext = freedown;
     freedown = nptr;
@@ -151,9 +151,9 @@ void release(register expnode *node)
     }
 }
 
-void nodecopy(char *n1, char *n2)
+void nodecopy(expnode *n1, expnode *n2)
 {
-    move(n1,n2,NODESIZE);
+    move((char *)n1,(char *)n2,NODESIZE);
 }
 
 int istype(void)
