@@ -115,7 +115,7 @@ extern FILE    *in,
 extern DIRECT int lbf,
                 lbdone,
                 opsdone;
-extern DIRECT int dbflag;
+extern DIRECT int dbflag, level2flag;
 
 /*
  * function prototypes - abstract (parameter TYPES only, no names).
