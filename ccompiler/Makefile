@@ -1,18 +1,27 @@
 include $(NITROS9DIR)/rules.mak
 
+# $(call files,patterns): the files matching the shell patterns, as
+# $(wildcard) gives, less any name containing a space.  Such names are the
+# "name 2.c" copies a synced folder (iCloud Drive, for one) leaves beside the
+# real file; make would split one into words that name no file and stop with
+# "No rule to make target".
+files = $(shell for f in $(1); do \
+          case "$$f" in (*' '*) ;; (*) test -e "$$f" && echo "$$f" ;; esac; \
+        done)
+
 DSK		= CCompiler.dsk
 CMDS		= cc1 cc2 c.prep c.pass1 c.pass2 c.comp c.opt c.asm c_asm c.link make
-HEADERS		= $(wildcard defs/*.h)
-LIBRARIES	= $(wildcard lib/*.l lib/*.r)
+HEADERS		= $(call files,defs/*.h)
+LIBRARIES	= $(call files,lib/*.l lib/*.r)
 # rd.c is a host-side maintainer tool (a modern-machine port of rdump.c that
 # reads big-endian OS-9 ROF files); it is compiled for this build host and is
 # deliberately not installed on the 6809, so keep it out of the sources copied
 # onto the disk image.  The disk carries the 6809 rdump.c source instead.
-C_SOURCES	= $(filter-out sources/rd.c,$(wildcard sources/*.c))
+C_SOURCES	= $(filter-out sources/rd.c,$(call files,sources/*.c))
 HOSTCC		= cc
 HOSTCFLAGS	= -O2 -Wall
-ASM_SOURCES	= $(wildcard sources/*.a)
-SYS_SOURCES	= $(wildcard sources/*.sys)
+ASM_SOURCES	= $(call files,sources/*.a)
+SYS_SOURCES	= $(call files,sources/*.sys)
 
 # Help entries for the OS-9 "help" utility, one per compiler command.  They
 # are merged (cat) into a single "helpmsg" file that "help" reads from

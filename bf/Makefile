@@ -1,8 +1,17 @@
 include $(NITROS9DIR)/rules.mak
 
+# $(call files,patterns): the files matching the shell patterns, as
+# $(wildcard) gives, less any name containing a space.  Such names are the
+# "name 2.c" copies a synced folder (iCloud Drive, for one) leaves beside the
+# real file; make would split one into words that name no file and stop with
+# "No rule to make target".
+files = $(shell for f in $(1); do \
+          case "$$f" in (*' '*) ;; (*) test -e "$$f" && echo "$$f" ;; esac; \
+        done)
+
 DSK	= bf.dsk
 
-SOURCEFILES := $(wildcard *.bf)
+SOURCEFILES := $(call files,*.bf)
 TEXTFILES	= README.md $(SOURCEFILES)
 OBJS		= bf
 ALLOBJS		= $(OBJS)

@@ -12,6 +12,15 @@ export NITROS9DIR
 
 include $(NITROS9DIR)/rules.mak
 
+# $(call files,patterns): the files matching the shell patterns, as
+# $(wildcard) gives, less any name containing a space.  Such names are the
+# "name 2.c" copies a synced folder (iCloud Drive, for one) leaves beside the
+# real file; make would split one into words that name no file and stop with
+# "No rule to make target".
+files = $(shell for f in $(1); do \
+          case "$$f" in (*' '*) ;; (*) test -e "$$f" && echo "$$f" ;; esac; \
+        done)
+
 PYTHON	?= python3
 
 # The Basic09 source (forked from basic09/microware) and its build script
@@ -28,7 +37,7 @@ B09DEFS	= -DCOMMUNITY=1 -DLevel=2
 EDAS	= lwasm --no-warn=ifp1 --format=os9 \
 	  --pragma=pcaspcr,nosymbolcase,condundefzero,dollarnotlocal,noforwardrefmax \
 	  --includedir=$(DEFSDIR)
-EDSRC	= $(wildcard editor/*.asm)
+EDSRC	= $(call files,editor/*.asm)
 HVSRC	= help/l2b09help.asm editor/term.asm editor/keys.asm
 
 # A module over three 8K blocks needs a fourth slot, and l2b09run with far
@@ -84,7 +93,7 @@ l2b09help: $(HVSRC) defsfile
 	    help/l2b09help.asm $(ASOUT)$@
 
 # The help pages; every Basic09 keyword and error must have one
-basic09-l2.hlp: $(wildcard help/*.txt) help/mkhelp.py $(SRCDIR)/comand.asm
+basic09-l2.hlp: $(call files,help/*.txt) help/mkhelp.py $(SRCDIR)/comand.asm
 	$(PYTHON) help/mkhelp.py --keytab $(SRCDIR)/comand.asm \
 	    --errmsg $(NITROS9DIR)/level1/sys/errmsg -o $@ help
 
