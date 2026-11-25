@@ -7,6 +7,7 @@
 FILE           *in,
                *outf,
                *datfile;
+DIRECT int      level2flag;
 DIRECT int      dbflag,
                 inserts,
                 inlcnt;
@@ -52,6 +53,11 @@ int main(int argc, char **argv)
 					debugcnt = debugcnt * 10 + (c - '0');
 				break;
 #endif
+			case '2':
+				if (argp[1])
+					error("unknown option '%s'\n", argp - 1, NULL, NULL);
+				level2flag = 1;
+				break;
 			case 'i':
 				insmax = 0;
 				if (*++argp != '=')

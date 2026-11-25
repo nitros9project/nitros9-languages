@@ -186,8 +186,85 @@ void movlab(instruction *i1, instruction *i2)
 	}
 }
 
+/* Level II mode is an explicit promise that Y is zero.  Rewrite only
+ * constant indexed addressing, never accumulator, indirect or auto-indexed
+ * operands.  Run at emission so ordinary peepholes see their usual input.
+ */
+static int listed(char *name, char *list)
+{
+    char key[MNEMSIZE + 3];
+    strcpy(key, " ");
+    strcat(key, name);
+    strcat(key, " ");
+    return strstr(list, key) != NULL;
+}
+
+static void level2(instruction *i, char *mnem, char *args)
+{
+    char *comma, *offset, *tail, *p;
+    char result[ARGSIZE + 1];
+    instruction *next;
+    int lea;
+
+    comma = strchr(args, ',');
+    if (!comma || comma[1] != 'y')
+        return;
+    tail = comma + 2;
+    if (*tail && *tail != ' ' && *tail != '\t')
+        return;
+    offset = args;
+    if (*offset == '>')
+        ++offset;
+    /* Accept the expression alphabet emitted by c3; reject indexing syntax. */
+    for (p = offset; p < comma; ++p)
+        if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
+              (*p >= '0' && *p <= '9') || strchr("_$+*/().-", *p)))
+            return;
+    if (comma - offset == 1 && strchr("aAbBdD", *offset))
+        return;
+    lea = listed(mnem, " leax leas leau ");
+    if (lea)
+    {
+        next = (instruction *)i->succ;
+        /* LD changes N/Z/V, whereas LEA preserves some or all of them.
+         * Only substitute if the next instruction overwrites all three
+         * before observing them.  Never look past a branch or call. */
+        if ((chain *)next == &ilist || (next->itype & BRANCH) ||
+            !listed(next->mnem,
+                " lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
+                " cmpa cmpb cmpd cmpx cmpy cmpu cmps "))
+            return;
+    }
+    else if (!listed(mnem,
+        " lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
+        " adda addb addd adca adcb suba subb subd sbca sbcb "
+        " cmpa cmpb cmpd cmpx cmpy cmpu cmps anda andb ora orb eora eorb "
+        " bita bitb neg com lsr ror asr asl lsl rol dec inc tst clr jmp jsr "))
+        return;
+    result[0] = lea ? '#' : '>';
+    if (comma == offset)
+    {
+        result[1] = '0';
+        result[2] = 0;
+    }
+    else
+    {
+        memcpy(result + 1, offset, comma - offset);
+        result[1 + (comma - offset)] = 0;
+    }
+    strcat(result, tail);
+    strcpy(args, result);
+    if (lea)
+    {
+        mnem[2] = mnem[3];
+        mnem[3] = 0;
+        mnem[1] = 'd';
+    }
+}
+
 void rminst(void)
 {
+    char mnem[MNEMSIZE + 1], args[ARGSIZE + 1];
 	register instruction *i;
 	label          *l;
 
@@ -215,9 +292,13 @@ void rminst(void)
 	}
 	else
 	{
-		fprintf(outf, "%s", i->mnem);
-		if (i->alt.args[0])
-			fprintf(outf, " %s", i->alt.args);
+		strcpy(mnem, i->mnem);
+        strcpy(args, i->alt.args);
+        if (level2flag)
+            level2(i, mnem, args);
+        fprintf(outf, "%s", mnem);
+		if (args[0])
+			fprintf(outf, " %s", args);
 	}
 	putc('\n', outf);
 	remins(i);
