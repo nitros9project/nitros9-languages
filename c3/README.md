@@ -154,7 +154,28 @@ Host driver regression checks, with the freshly built tools on `PATH`:
 ```sh
 sh lwbackend/tests/exitstatus.sh
 sh lwbackend/tests/longpath.sh
+sh lwbackend/tests/structdims.sh
 ```
+
+The `structdims.sh` check exercises single-pass, two-pass, and experimental
+(`c3compx`) compilation. The experimental check covers the known-structure
+array case; that compiler cannot yet size arrays of pointers to incomplete tags.
+It is only a reliable regression check for uninitialized dimension pointers
+when the compiler is built with pattern-initialized automatic variables. A pass
+from a normal build does **not** prove this bug is absent. With a host compiler
+supporting `-ftrivial-auto-var-init=pattern`, clean and rebuild the relevant
+stages first (from the `c3` directory):
+
+```sh
+for stage in comp comp1 comp2 compx; do
+    make -C build/unix/$stage clean
+    make -C build/unix/$stage CC="cc -ftrivial-auto-var-init=pattern" CPPFLAGS=-D_DEFAULT_SOURCE
+done
+sh lwbackend/tests/structdims.sh
+```
+
+The experimental `c3compx` copy shares the fix; `compexpansi` is kept in step
+but is not currently built.
 
 Target initialization and floating-point tests are documented in
 [lwbackend/tests/README.md](lwbackend/tests/README.md). The two-pass backend

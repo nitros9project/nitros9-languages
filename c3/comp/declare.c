@@ -747,6 +747,8 @@ int settype(long *size, dimnode **dimptr, elem **ellist)
 	int type=0,tsize=2;
 
 	*ellist = 0;
+	/* Known/forward struct tags return early; only typedefs supply dimensions. */
+	*dimptr = NULL;
 	if (sym==KEYWORD) {
 		switch (type=symval) {
 			case SHORT:  type=INT;
