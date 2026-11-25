@@ -154,6 +154,7 @@ Host driver regression checks, with the freshly built tools on `PATH`:
 ```sh
 sh lwbackend/tests/exitstatus.sh
 sh lwbackend/tests/longpath.sh
+sh lwbackend/tests/structdims.sh
 ```
 
 Target initialization and floating-point tests are documented in
