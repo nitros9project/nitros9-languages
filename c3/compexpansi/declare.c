@@ -684,6 +684,8 @@ int settype(int *size, dimnode **dimptr, elem **ellist)
 	int type = 0, tsize = 2;
 
 	*ellist = 0;
+	/* Structure-tag early returns must also initialize the dimensions. */
+	*dimptr = NULL;
 	if (sym == KEYWORD)
 	{
 		switch (type = symval)
