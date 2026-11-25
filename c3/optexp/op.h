@@ -152,6 +152,7 @@ void            endsect(void);
 void            optim(instruction *);
 void            finddupl(instruction *);
 void            rminst(void);
+void            level2reset(void);
 void            labelinit(void);
 void            insinit(void);
 void            optinit(void);

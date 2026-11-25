@@ -17,7 +17,7 @@ def optimize(source, enabled=True):
                           check=True).stdout
 
 for operand, expected in [('400,y', '>400'), ('>symbol+2,y', '>symbol+2'),
-                          (',y', '>0'), ('-200,y', '>-200'),
+                          ('-200,y', '>-200'),
                           ('$1234,y comment', '>$1234 comment')]:
     source = f'entry lda {operand}\n rts\n'
     assert f'lda {expected}' in optimize(source)
@@ -25,6 +25,20 @@ for operand, expected in [('400,y', '>400'), ('>symbol+2,y', '>symbol+2'),
 for operand in ['a,y', 'b,y', 'd,y', '[400,y]', ',y+', ',--y',
                 '<400,y', '400,x', '400,u', '400,s']:
     assert f'lda {operand}' in optimize(f' lda {operand}\n rts\n')
+for operand in [',y'] + [f'{n},y' for n in range(-16, 16)] + ['$f,y', '-$10,y']:
+    assert f'lda {operand}' in optimize(f' lda {operand}\n rts\n')
+for operand in ['-17,y', '16,y', '$10,y', '-$11,y']:
+    assert f'lda >{operand[:-2]}' in optimize(f' lda {operand}\n rts\n')
+for writer in ['ldy 4,s', 'ldy 400,y', 'leay 1,y', 'puls y', 'pulu a,y',
+               'tfr d,y', 'exg d,y', 'exg y,x', 'lda ,y+', 'lda ,--y', 'rti']:
+    output = optimize(f' {writer}\n lda 400,y\n sta output\n rts\n')
+    assert 'lda 400,y' in output, (writer, output)
+# The reviewer's inline-assembly example must preserve pointer-relative loads.
+assert 'lda 2,y' in optimize(' pshs y\n ldy 4,s\n lda 2,y\n puls y\n rts\n')
+# Conservative state lasts through labels and explicit restoration, then resets
+# only for a new program section (not a data section).
+assert 'lda 400,y' in optimize(' ldy 4,s\n puls y\nnext lda 400,y\n rts\n')
+assert 'lda >400' in optimize(' ldy 4,s\n rts\n endsect\n psect next\n lda 400,y\n rts\n')
 for reg in ['x', 'u', 's']:
     assert f'ld{reg} #400' in optimize(f' lea{reg} 400,y\n lda ,x\n rts\n')
     # Flags remain live across a call/return, or a conditional branch.
@@ -50,6 +64,12 @@ if args.lwasm and args.usim:
  orcc #$04
  leau value,y
  bne failed
+ pshs y
+ ldy #value-400
+ lda 400,y
+ cmpa #42
+ bne failed
+ puls y
  ldd #0
  rts
 failed ldd #1

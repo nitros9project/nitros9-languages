@@ -221,6 +221,7 @@ void optimise(void)
 			if (strcmp(mnem, "psect") == 0)
 			{
 				endsect();
+				level2reset();
 				goto put;
 			}
 			break;
