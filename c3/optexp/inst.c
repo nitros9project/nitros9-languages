@@ -192,79 +192,155 @@ void movlab(instruction *i1, instruction *i2)
  */
 static int listed(char *name, char *list)
 {
-    char key[MNEMSIZE + 3];
-    strcpy(key, " ");
-    strcat(key, name);
-    strcat(key, " ");
-    return strstr(list, key) != NULL;
+	char key[MNEMSIZE + 3];
+	strcpy(key, " ");
+	strcat(key, name);
+	strcat(key, " ");
+	return strstr(list, key) != NULL;
+}
+
+static int level2_y_written;
+
+void level2reset(void)
+{
+	level2_y_written = 0;
+}
+
+/* Inline assembly shares this instruction stream.  Once Y may have changed,
+ * keep its addressing intact for the rest of this program section. */
+static int writes_y(char *mnem, char *args)
+{
+	char *p;
+
+	if (listed(mnem, " ldy leay rti "))
+		return 1;
+	if (strstr(args, ",y+") || strstr(args, ",-y") || strstr(args, ",--y"))
+		return 1;
+	if (listed(mnem, " puls pulu "))
+	{
+		for (p = args; *p && *p != ' ' && *p != '\t'; ++p)
+			if (*p == 'y' && (p == args || p[-1] == ',') &&
+			    (!p[1] || p[1] == ',' || p[1] == ' ' || p[1] == '\t'))
+				return 1;
+	}
+	if (listed(mnem, " tfr exg "))
+	{
+		p = strchr(args, ',');
+		if (p && p[1] == 'y' && (!p[2] || p[2] == ' ' || p[2] == '\t'))
+			return 1;
+		if (!strcmp(mnem, "exg") && args[0] == 'y' && args[1] == ',')
+			return 1;
+	}
+	return 0;
+}
+
+/* Recognize only literal five-bit offsets; do not evaluate expressions. */
+static int small_offset(char *p, char *end)
+{
+	int negative = 0, base = 10, value = 0, digit;
+
+	if (p == end)
+		return 1;
+	if (*p == '+' || *p == '-')
+		negative = (*p++ == '-');
+	if (p < end && *p == '$')
+	{
+		base = 16;
+		++p;
+	}
+	if (p == end)
+		return 0;
+	while (p < end)
+	{
+		if (*p >= '0' && *p <= '9') digit = *p - '0';
+		else if (*p >= 'a' && *p <= 'f') digit = *p - 'a' + 10;
+		else if (*p >= 'A' && *p <= 'F') digit = *p - 'A' + 10;
+		else return 0;
+		if (digit >= base)
+			return 0;
+		value = value * base + digit;
+		if (value > (negative ? 16 : 15))
+			return 0;
+		++p;
+	}
+	return 1;
 }
 
 static void level2(instruction *i, char *mnem, char *args)
 {
-    char *comma, *offset, *tail, *p;
-    char result[ARGSIZE + 1];
-    instruction *next;
-    int lea;
+	char *comma, *offset, *tail, *p;
+	char result[ARGSIZE + 1];
+	instruction *next;
+	int lea;
 
-    comma = strchr(args, ',');
-    if (!comma || comma[1] != 'y')
-        return;
-    tail = comma + 2;
-    if (*tail && *tail != ' ' && *tail != '\t')
-        return;
-    offset = args;
-    if (*offset == '>')
-        ++offset;
-    /* Accept the expression alphabet emitted by c3; reject indexing syntax. */
-    for (p = offset; p < comma; ++p)
-        if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
-              (*p >= '0' && *p <= '9') || strchr("_$+*/().-", *p)))
-            return;
-    if (comma - offset == 1 && strchr("aAbBdD", *offset))
-        return;
-    lea = listed(mnem, " leax leas leau ");
-    if (lea)
-    {
-        next = (instruction *)i->succ;
-        /* LD changes N/Z/V, whereas LEA preserves some or all of them.
-         * Only substitute if the next instruction overwrites all three
-         * before observing them.  Never look past a branch or call. */
-        if ((chain *)next == &ilist || (next->itype & BRANCH) ||
-            !listed(next->mnem,
-                " lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
-                " cmpa cmpb cmpd cmpx cmpy cmpu cmps "))
-            return;
-    }
-    else if (!listed(mnem,
-        " lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
-        " adda addb addd adca adcb suba subb subd sbca sbcb "
-        " cmpa cmpb cmpd cmpx cmpy cmpu cmps anda andb ora orb eora eorb "
-        " bita bitb neg com lsr ror asr asl lsl rol dec inc tst clr jmp jsr "))
-        return;
-    result[0] = lea ? '#' : '>';
-    if (comma == offset)
-    {
-        result[1] = '0';
-        result[2] = 0;
-    }
-    else
-    {
-        memcpy(result + 1, offset, comma - offset);
-        result[1 + (comma - offset)] = 0;
-    }
-    strcat(result, tail);
-    strcpy(args, result);
-    if (lea)
-    {
-        mnem[2] = mnem[3];
-        mnem[3] = 0;
-        mnem[1] = 'd';
-    }
+	if (level2_y_written)
+		return;
+	comma = strchr(args, ',');
+	if (!comma || comma[1] != 'y')
+		return;
+	tail = comma + 2;
+	if (*tail && *tail != ' ' && *tail != '\t')
+		return;
+	offset = args;
+	if (*offset == '>')
+		++offset;
+	/* Accept the expression alphabet emitted by c3; reject indexing syntax. */
+	for (p = offset; p < comma; ++p)
+		if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
+			  (*p >= '0' && *p <= '9') || strchr("_$+*/().-", *p)))
+			return;
+	if (comma - offset == 1 && strchr("aAbBdD", *offset))
+		return;
+	/* Zero and signed five-bit offsets are already smaller than extended
+	 * memory addressing.  LEA-to-immediate retains its own flag check below. */
+	lea = listed(mnem, " leax leas leau ");
+	if (!lea && small_offset(offset, comma))
+		return;
+	if (lea)
+	{
+		next = (instruction *)i->succ;
+		/* LD changes N/Z/V, whereas LEA preserves some or all of them.
+		 * Only substitute if the next instruction overwrites all three
+		 * before observing them.  Never look past a branch or call.
+		 * The successor remains in the peephole window after this emission:
+		 * future rules must preserve that flag overwrite.  Today's STD/LDD
+		 * merge leaves a store, so it continues to overwrite N/Z/V. */
+		if ((chain *)next == &ilist || (next->itype & BRANCH) ||
+			!listed(next->mnem,
+				" lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
+				" cmpa cmpb cmpd cmpx cmpy cmpu cmps "))
+			return;
+	}
+	else if (!listed(mnem,
+		" lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
+		" adda addb addd adca adcb suba subb subd sbca sbcb "
+		" cmpa cmpb cmpd cmpx cmpy cmpu cmps anda andb ora orb eora eorb "
+		" bita bitb neg com lsr ror asr asl lsl rol dec inc tst clr jmp jsr "))
+		return;
+	result[0] = lea ? '#' : '>';
+	if (comma == offset)
+	{
+		result[1] = '0';
+		result[2] = 0;
+	}
+	else
+	{
+		memcpy(result + 1, offset, comma - offset);
+		result[1 + (comma - offset)] = 0;
+	}
+	strcat(result, tail);
+	strcpy(args, result);
+	if (lea)
+	{
+		mnem[2] = mnem[3];
+		mnem[3] = 0;
+		mnem[1] = 'd';
+	}
 }
 
 void rminst(void)
 {
-    char mnem[MNEMSIZE + 1], args[ARGSIZE + 1];
+	char mnem[MNEMSIZE + 1], args[ARGSIZE + 1];
 	register instruction *i;
 	label          *l;
 
@@ -293,10 +369,14 @@ void rminst(void)
 	else
 	{
 		strcpy(mnem, i->mnem);
-        strcpy(args, i->alt.args);
-        if (level2flag)
-            level2(i, mnem, args);
-        fprintf(outf, "%s", mnem);
+		strcpy(args, i->alt.args);
+		if (level2flag)
+		{
+			level2(i, mnem, args);
+			if (writes_y(i->mnem, i->alt.args))
+				level2_y_written = 1;
+		}
+		fprintf(outf, "%s", mnem);
 		if (args[0])
 			fprintf(outf, " %s", args);
 	}
