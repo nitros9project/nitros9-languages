@@ -37,3 +37,6 @@ ccompiler/make
 ccompiler/rd
 ccompiler/helpmsg
 ccompiler/lib/*_check
+
+# Generated canonical RMA distribution sources
+c3/.rma/

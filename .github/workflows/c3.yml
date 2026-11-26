@@ -23,6 +23,14 @@ jobs:
           sh c3/scripts/check-shared-library.sh
       - name: Cross-build OS-9 compiler tools against canonical libc
         run: make -C c3 os9 NITROS9DIR="$GITHUB_WORKSPACE/.nitros9"
+      - name: Check canonical RMA distribution sources
+        run: |
+          python3 -m unittest discover -s c3/scripts/tests
+          make -C c3 rma NITROS9DIR="$GITHUB_WORKSPACE/.nitros9"
+          python3 c3/scripts/check-rma-library.py --rma-dir c3/.rma
+          mkdir -p .rutils/Cmds
+          for tool in rma rlink mold rdump; do cp "ccompiler/rma/$tool" .rutils/Cmds/; done
+          make -C c3 dsk NITROS9DIR="$GITHUB_WORKSPACE/.nitros9" COCOC="$GITHUB_WORKSPACE/.rutils"
       - name: Verify staged installation
         run: |
           make -C c3 install NITROS9DIR="$GITHUB_WORKSPACE/.nitros9" PREFIX=/opt/c3 DESTDIR="$GITHUB_WORKSPACE/stage"
@@ -30,4 +38,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: c3-canonical-library
-          path: c3/lwbackend/LIBC.json
+          path: |
+            c3/lwbackend/LIBC.json
+            c3/.rma/LIBC.json
+            c3/c3.dsk

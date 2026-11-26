@@ -52,9 +52,9 @@ compiler (`cc1`) rather than CoCo C's `dcc`:
 
 `lib.a/RELS` holds five relocatable objects (`scanf_c`, `qsort_c`,
 `pffinit_c`, `l3tol_c` and `ltol3_c`) whose source is not in this tree;
-the build merges them in as they are. c3's library (`../../c3/lib/lib.a`)
-has source for all five: `qsort.c` and `pffinit.c` in C, and `scanf.a`,
-`l3tol.a` and `ltol3.a` in assembler converted to c3's calling convention.
+the build merges them in as they are. C3 now obtains its library sources
+from the separately pinned nitros9-c-libs repository; its former local library
+copy has been removed. This directory remains specific to the other C compiler.
 The `.old` and `.bak` files are earlier versions kept by the original tree.
 
 ## Layout

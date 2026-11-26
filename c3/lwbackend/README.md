@@ -12,8 +12,8 @@ lwasm syntax and links it as an OS-9 module.
 
 The maintained C library comes from the separately pinned nitros9-c-libs repo.
 Generated canonical headers are reached through `../defs`; provenance is in
-`LIBC.json`. The historical local `../lib` and `../legacy-defs` trees are used
-only by the separate archival RMA disk workflow, not this backend.
+`LIBC.json`. The RMA disk workflow exports the same canonical build; local
+`lib`, `mwlib`, and header copies have been removed.
 
 ## Pipeline
 
@@ -153,8 +153,8 @@ every init-data path — initialised `char[]`, `int[]`, a data-pointer
 relocated by `+module base`), and an uninitialised `int` read back as 0 —
 printed all expected values (`tests/ctest.c`).
 
-The runtime library is grown incrementally by adding more `lib/imath` (etc.)
-sources to `buildrt.sh` — they translate through the same filter.
+C library and integer/long arithmetic changes belong in nitros9-c-libs.
+`buildrt.sh` builds only compiler-owned startup and FP primitives.
 
 ## Known limitations / next steps
 
