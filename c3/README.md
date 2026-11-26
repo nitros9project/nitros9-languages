@@ -255,3 +255,22 @@ probe with both optimizer settings, adding initialized data/code pointer and BSS
 checks. `ontarget` also compiles and executes a hello program with the on-target
 compiler. It changes only a scratch copy of the supplied boot image. Results,
 console output, and RMA build logs remain in `$WORK` for inspection.
+
+### Existing target-compiler limitation
+
+The target compiler's `c3comp1` currently crashes while compiling the hello smoke
+program (`PC=$004A`, invalid instruction). This was reproduced on a clean build
+of main revision `140cb20127cb294373eaedaa05b9ff6a12d995a0`, before the library-copy
+removal. Thus `make ontarget` currently fails at its compiler smoke check after
+the two RMA library/ABI probes pass. The checker reports that failure.
+
+To validate just the RMA library on a prepared disk:
+
+```sh
+python3 scripts/check-rma-runtime.py --disk c3.dsk \
+  --boot-disk /path/to/boot.dsk --firmware /path/to/rel_picothing.srec \
+  --emulator /path/to/usim09pt --out /tmp/c3-rma-check-new
+```
+
+Use a fresh output directory for each run. Add `--self-host` to include the
+currently failing target-compiler smoke test.
