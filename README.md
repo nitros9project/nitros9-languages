@@ -36,7 +36,9 @@ including their disk images. The BASIC09 disk is based on the CoCo 3 floppy
 recipe in the NitrOS-9 checkout. Use `make clean` to remove generated modules
 and disk images.
 
-c3 also needs a host C compiler. It is built first as host executables,
+c3 also needs a host C compiler, Git, Python 3.9+, and LWTOOLS. Its normal
+host/cross build uses the pinned canonical nitros9-c-libs source and generated
+headers; see [c3/README.md](c3/README.md). It is built first as host executables,
 then used to cross-build itself to OS-9 modules. Its disk image also needs
 the Microware assembler and linker from a
 [CoCo C](https://github.com/DrPitre/CoCoC) checkout. Without one, the c3

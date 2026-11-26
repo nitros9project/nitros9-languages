@@ -591,7 +591,7 @@ fprintf(stderr,"number: n=%08lX%08lX\n",*((long*)&n),*((long*)&n+1));
         return LONG;
     } else if (*((short*)&n+2)) goto longint;   /*  implicitly long  */
     else {                          /*  int  */
-//        *(np->ip) = *((short*)&n+3);
+/*        *(np->ip) = *((short*)&n+3); */
         np->ip = (int)n;
         return INT;
     }
@@ -719,7 +719,7 @@ fraction:
             }
         }
 
-//        n = normaliz(&n);
+/*        n = normaliz(&n); */
 
         if (cc=='E' || cc=='e')
 		{
@@ -769,7 +769,7 @@ fraction:
 	/* Is it larger than a 32 bit signed long? */
 	if (*np > 2147483647 || *np < -2147483647)
 	{
-//        getch();
+/*        getch(); */
 		return 0; /* overflow */
 	}
 	

@@ -17,7 +17,6 @@ direct char
 	*defdev;			/* default device name from command line */
 
 static direct char
-	*devptr,			/* ptr to dev tbl form sysdevice */
 	*pedit = "0",       /* default psect edition */
 	*fname;             /* name of file to pre-process */
 
@@ -48,10 +47,6 @@ static char curlinebuf[32];
 
 void errexit(int n)
 {
-#if defined(OSK) || defined(OS9)
-	if (devptr)
-		detach(devptr);
-#endif
 	lerror("cpp fatal");
 	exit(n);
 }
@@ -256,12 +251,6 @@ done: ;
 		fatal("missing #endif");
 	}
 
-#if defined(OSK) || defined(OS9)
-	if (devptr)
-	{
-		detach(devptr);
-	}
-#endif
 
 #ifdef DEBUG
 	if (dflag)

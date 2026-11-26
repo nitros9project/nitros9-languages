@@ -11,6 +11,7 @@ compiler also has a two-pass mode using `c3comp1` and `c3comp2`.
 ## Requirements
 
 - A Unix-like host with a C compiler, Make, a POSIX shell, `awk`, and `sed`.
+- Git and Python 3.9 or later for the pinned canonical C library.
 - LWTOOLS: `lwasm`, `lwar`, and `lwlink` on `PATH`.
 - A NitrOS-9 checkout, with `NITROS9DIR` pointing to its root. The top-level
   Makefile includes `$NITROS9DIR/rules.mak`.
@@ -37,6 +38,27 @@ installed c3 toolchain:
 | `make` | OS-9 build; also creates `c3.dsk` when `COCOC` is set |
 | `make clean` | Removes host, runtime, and OS-9 build outputs |
 
+The default host/cross runtime and headers come from
+[nitros9-c-libs](https://github.com/nitros9project/nitros9-c-libs), pinned in
+`nitros9-c-libs.revision`. The build fetches a clean checkout into
+`lwbackend/nitros9-c-libs/`, compiles its canonical sources with C3, and generates
+headers under `.libc/include/` (`defs` points there). No C library or integer/long
+helpers are built from the historical `lib/` tree. `lwbackend/libc3lw.a` contains
+only compiler-owned floating-point primitives; startup is compiler-owned as well.
+`lwbackend/LIBC.json` records the canonical commit, source hashes, compiler hashes,
+and archive hash. To use an existing clean checkout at that exact revision:
+
+```sh
+NITROS9_C_LIBS_DIR=/path/to/nitros9-c-libs make runtime
+sh scripts/check-shared-library.sh
+```
+
+`make os9` also compiles the target compiler tools against these headers and
+library. Each stage is checked separately; diagnostics cannot become a seemingly
+valid empty object. The compiler tools use canonical time/file APIs and the
+existing findstr substring primitive. This is a cross-build check, not proof
+that the entire compiler self-hosts on an OS-9 machine.
+
 The working optimizer is `c3optx`, built from `optexp/`. The older `opt/`
 optimizer has missing sources and is excluded from the default build.
 
@@ -55,7 +77,8 @@ export PATH="$HOME/.local/bin:$PATH"
 ```
 
 Programs, assembler/linker shims, and runtime files go in `$PREFIX/bin`.
-Target headers go in `$PREFIX/share/toolshed/defs`. The installed `c3`
+Generated canonical target headers and their `LIBC.json` provenance go in
+`$PREFIX/share/toolshed/defs`, including nested `sys/` headers. The installed `c3`
 driver is rebuilt with the matching default header path. After pulling runtime
 library changes, rerun `make install` with the same `PREFIX` so installed builds
 link the updated `libc3.a`.
@@ -193,3 +216,12 @@ compiler works in two-pass mode.
 | `defs/`, `lib/` | Target headers and C library sources |
 | `make/`, `lorder/`, `lsplit/` | Supporting build and library utilities |
 | `test/`, `docs/` | Library test sources and reference documentation |
+
+## Historical RMA distribution
+
+The optional RMA/rlink disk builder and its on-target `mklibs` procedure are
+historical workflows. They use the archived `lib/` sources and `legacy-defs/`
+headers; those are not inputs to the maintained LWASM host/cross runtime or the
+bakeoff. RMA/ROF migration is separate from the native LWASM library profile.
+The current canonical profile does not provide the historical CGFX or floating
+stdio archives.

@@ -235,6 +235,7 @@ _stkcheck:	rts
 ; Divide-by-zero / range-error reporter referenced by the integer-divide and
 ; long-math helpers.  The Microware version signals the process; stubbed here
 ; as a no-op so those helpers link without pulling in the OS-9 syscall defs.
+		export	argv
 		export	_rpterr
 _rpterr:	rts
 

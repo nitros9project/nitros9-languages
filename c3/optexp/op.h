@@ -44,7 +44,7 @@ typedef struct chstruct
 					   structs, and rejects mixing a struct
 					   pointer with void or scalar pointers */
 	               *pred;
-}               chain;
+}               opchain;
 
 typedef struct istruct
 {
@@ -52,10 +52,10 @@ typedef struct istruct
 	               *pred;
 	struct lstruct
 	{
-		struct lstruct *succ,	/* self-referential (see chain above) */
+		struct lstruct *succ,	/* self-referential (see opchain above) */
 		               *pred;
 		struct istruct *dest;
-		chain          *rlist;
+		opchain          *rlist;
 		struct lstruct *nextl;
 		int             lflags;
 		char            lname[LABELSIZE + 1];
@@ -81,7 +81,7 @@ typedef union istruct
 			int            *succ,
 			               *pred;
 			 /* struct */ union istruct *dest;
-			chain          *rlist;
+			opchain          *rlist;
 			struct lstruct *nextl;
 			int             lflags;
 			char            lname[LABELSIZE + 1];
@@ -105,8 +105,8 @@ typedef union istruct
 
 typedef struct lstruct label;
 
-extern DIRECT chain ilist;
-extern chain    ltable[];
+extern DIRECT opchain ilist;
+extern opchain    ltable[];
 extern DIRECT label *lfree;
 extern DIRECT int inscount;
 extern FILE    *in,
@@ -144,9 +144,9 @@ void            remins(instruction *);
 void            insref(instruction *, label *);
 void            error(char *, char *, char *, char *);
 void            fix(instruction *, int);
-void            freechain(chain *);
+void            freechain(opchain *);
 void            remref(instruction *, label *);
-void            freearg(chain *);
+void            freearg(opchain *);
 void            freelabel(label *);
 void            endsect(void);
 void            optim(instruction *);
@@ -166,7 +166,7 @@ int             hash(char *);
 int             match(char *, char *);
 int             duplsrch(instruction *, instruction *);
 
-chain          *newchain(void);
+opchain          *newchain(void);
 label          *inslabel(char *);
 label          *newlabel(void);
 label          *findlabel(char *);

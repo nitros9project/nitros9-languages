@@ -21,11 +21,11 @@ all:
 	@echo "*               MW C Compiler                    *"
 	@echo "*                                                *"
 	@echo "**************************************************"
-	$(foreach dir, $(dirs), (cd $(dir); make);)
+	@set -e; for dir in $(dirs); do $(MAKE) -C $$dir; done
 
 # Clean all components
 clean:
-	$(foreach dir, $(dirs), (cd $(dir); make clean);)
+	@set -e; for dir in $(dirs); do $(MAKE) -C $$dir clean; done
 
 # Installation lives in c3/Makefile (see note above).
 install dist package uninstall:

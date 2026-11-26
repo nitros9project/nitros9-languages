@@ -204,12 +204,17 @@ int main(int argc, char **argv)
 	int             assdel;
 	char           *optzname, *asmbname, *linkname, *comp1name, *comp2name;
 
-	/* tool names, overridable from the environment (see the #defines) */
+	/* Environment overrides exist only on the Unix host. OS-9 has no environ. */
+#ifdef UNIX
 	if ((optzname = getenv("C3_OPT"))  == NULL) optzname = OPTZNAME;
 	if ((asmbname = getenv("C3_ASM"))  == NULL) asmbname = ASMBNAME;
 	if ((linkname = getenv("C3_LINK")) == NULL) linkname = LINKNAME;
 	if ((comp1name = getenv("C3_COMP1")) == NULL) comp1name = COMP1NAME;
 	if ((comp2name = getenv("C3_COMP2")) == NULL) comp2name = COMP2NAME;
+#else
+	optzname = OPTZNAME; asmbname = ASMBNAME; linkname = LINKNAME;
+	comp1name = COMP1NAME; comp2name = COMP2NAME;
+#endif
 
 	if (argc == 1)
 	{
@@ -422,7 +427,7 @@ int main(int argc, char **argv)
 	   file, otherwise every run leaks a 0-byte ctmp.XXXXXX into the cwd. */
 	{ int tfd = mkstemp(temp); if (tfd >= 0) close(tfd); unlink(temp); }
 #else
-	mkstemp(temp);		/* OS-9: mkstemp is mktemp - generates a name only */
+	mktemp(temp);		/* OS-9 generates the name without creating a file */
 #endif
 	strcpy(temp2, temp);
 	strcat(temp2, ".m");

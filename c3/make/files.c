@@ -17,9 +17,8 @@
 #endif
 #ifdef OS9
 #include <time.h>
-#include <os9.h>
-#include <modes.h>
-#include <direct.h>
+#include <os.h>
+#include <fcntl.h>
 #include <errno.h>
 #endif
 #include "h.h"
@@ -31,71 +30,20 @@
  *     Some stuffing around to get the modified time of a file
  *     in an OS9 file system
  */
-int getmdate(int fd, struct sgtbuf *tbp)
+int getmdate(int fd, _os_time *packet)
 {
-       struct registers        regs;
-       static struct fildes    fdbuf;
-
-
-       regs.rg_a = fd;
-       regs.rg_b = SS_FD;
-       regs.rg_x = &fdbuf;
-       regs.rg_y = sizeof (fdbuf);
-
-       if (_os9(I_GETSTT, &regs) == -1)
-       {
-               errno = regs.rg_b & 0xff;
+       static char descriptor[256];
+       int count = sizeof(descriptor);
+       if (_os_gs_fd(fd, descriptor, &count))
                return -1;
-       }
-       if (tbp)
-       {
-               _strass(tbp, fdbuf.fd_date, sizeof (fdbuf.fd_date));
-               tbp->t_second = 0;      /* Files are only acurate to mins */
+       if (packet) {
+               /* RBF FD.DAT at byte 3 contains year/month/day/hour/minute. */
+               memcpy(packet, descriptor + 3, 5);
+               packet->seconds = 0;
        }
        return 0;
 }
 
-
-/*
- *     Kludge routine to return an aproximation of how many
- *     seconds since 1980.  Dates will be in order, but will not
- *     be linear
- */
-time_t
-cnvtime(struct sgtbuf *tbp)
-{
-       long                    acc;
-
-       if (tbp->t_year > 80)
-           acc = tbp->t_year - 80;         /* Baseyear is 1980 */
-       else if (tbp->t_year!= 0)
-           acc = tbp->t_year + 100 - 80;  /* Years <80 are in 21st cent. */
-       acc = acc * 12 + tbp->t_month;
-       acc = acc * 31 + tbp->t_day;
-       acc = acc * 24 + tbp->t_hour;
-       acc = acc * 60 + tbp->t_minute;
-       acc = acc * 60 + tbp->t_second;
-
-       return acc;
-}
-
-
-/*
- *     Get the current time in the internal format
- */
-int time(time_t *tp)
-{
-       struct sgtbuf           tbuf;
-
-
-       if (getime(&tbuf) < 0)
-               return -1;
-
-       if (tp)
-               *tp = cnvtime(&tbuf);
-
-       return 0;
-}
 #endif
 
 
@@ -141,7 +89,7 @@ modtime(struct name *np)
        close(fd);
 #endif
 #ifdef OS9
-       struct sgtbuf           info;
+       _os_time              info;
        int                     fd;
        int                     mode=0;
        char *                  suff;
@@ -176,13 +124,13 @@ modtime(struct name *np)
        else if (getmdate(fd, &info) < 0)
                fatal("Can't getstat %s; error %d", np->n_name, errno);
        else {
-               np->n_time = cnvtime(&info);
+               np->n_time = o2utime(&info);
        }
        if (debug && (np->n_time != 0L)) {
                printf("\"%s\" was last modified",fullname);
                printf(" %3d/%02d/%02d  %2d:%02d; timestamp %ld.\n",
-                     info.t_year,info.t_month,info.t_day,info.t_hour,
-                     info.t_minute,np->n_time);
+                     info.year,info.month,info.day,info.hours,
+                     info.minutes,np->n_time);
        }   
 
        close(fd);

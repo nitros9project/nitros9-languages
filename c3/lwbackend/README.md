@@ -10,6 +10,11 @@ assembly (so the original `rma`/`rlink` path, and a future 6809 self-host,
 still work). This back end is a post-pass that translates that assembly to
 lwasm syntax and links it as an OS-9 module.
 
+The maintained C library comes from the separately pinned nitros9-c-libs repo.
+Generated canonical headers are reached through `../defs`; provenance is in
+`LIBC.json`. The historical local `../lib` and `../legacy-defs` trees are used
+only by the separate archival RMA disk workflow, not this backend.
+
 ## Pipeline
 
 ```
@@ -23,9 +28,9 @@ c3prep | c3comp | c3optx | c3lw.awk | lwasm --format=obj | lwlink --format=os9
 | `c3lw.awk` | Translate c3 (RMA/OS-9) assembly → lwasm syntax (the post-pass filter) |
 | `os9c3.ld` | lwlink script: the built-in `os9` layout + the `irec`/`ireloc`/`icreloc` init-data sections and the `stack` reservation |
 | `crt0.s`   | C startup for the lwlink model: entry/Y setup, data-area zeroing, init-image copy + pointer relocation, `_stkcheck`/`_rpterr` stubs, runtime globals |
-| `buildrt.sh` | Build the runtime: `crt0.o` + `libc3lw.a` (the C helper routines via the same filter) |
+| `buildrt.sh` | Build compiler-owned `crt0.o`, FP startup, and `libc3lw.a` (FP primitives only) |
 | `c3lw`     | Driver script: `.c` → `.mod` (or `-S`/`-c` to stop at asm/object) |
-| `buildlibc.sh` | Build the C library (`libc3.a`: stdio, strings, syscalls, memory) from `lib/lib.a`, `lib/sys.a` and the standalones here |
+| `buildlibc.sh` | Build canonical `nitros9-c-libs` sources at `../nitros9-c-libs.revision`, including integer/long helpers |
 | `fpwrap.a` | The float/double helpers the compiler calls, over the MC6839 IEEE package (FPO9) |
 | `fpinit.a` / `fpdummy.a` | `_fpinit`/`_fpterm`, built as standalone `fpinit.o` (link FPO9 at startup) and `fpdummy.o` (no-op); every link names exactly one |
 | `MC6839.md` | MC6839 linkage design and ABI |
@@ -77,7 +82,7 @@ with no environment set. Header paths up to 255 chars are fine (comp's
 
 float/double arithmetic uses the MC6839 IEEE package (the `FPO9` module from
 [nfp09](https://github.com/markrvmurray/nfp09)) through `fpwrap.a`, which is in
-`libc3.a`. `crt0` calls `_fpinit`/`_fpterm` in every program, and a program
+`libc3lw.a`. `crt0` calls `_fpinit`/`_fpterm` in every program, and a program
 **opts in** to floating point at link time:
 
 * host: `c3lw -f`, or pass the driver the on-target spelling `-l=/dd/c3/lib/fp.l`

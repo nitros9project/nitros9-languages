@@ -1,0 +1,33 @@
+name: C3 canonical runtime
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  c3-runtime:
+    runs-on: ubuntu-latest
+    container:
+      image: jamieleecho/coco-dev:0.83
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.2
+        with:
+          repository: nitros9project/nitros9
+          ref: 51408fab09083a4fbddcc0548958f29be174bee3
+          path: .nitros9
+      - name: Build canonical runtime and default header view
+        run: make -C c3 runtime NITROS9DIR="$GITHUB_WORKSPACE/.nitros9"
+      - name: Check host compiler and default library selection
+        run: |
+          sh c3/scripts/check-unix-strings.sh
+          sh c3/scripts/check-shared-library.sh
+      - name: Cross-build OS-9 compiler tools against canonical libc
+        run: make -C c3 os9 NITROS9DIR="$GITHUB_WORKSPACE/.nitros9"
+      - name: Verify staged installation
+        run: |
+          make -C c3 install NITROS9DIR="$GITHUB_WORKSPACE/.nitros9" PREFIX=/opt/c3 DESTDIR="$GITHUB_WORKSPACE/stage"
+          sh c3/scripts/check-shared-library.sh "$GITHUB_WORKSPACE/stage/opt/c3"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: c3-canonical-library
+          path: c3/lwbackend/LIBC.json
