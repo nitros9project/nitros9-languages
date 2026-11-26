@@ -1,115 +1,14 @@
 #!/bin/sh
-# buildlibc.sh - port the c3 C library to an OS-9 archive (libc3.a) with the
-# cross-toolchain, so cross-compiled programs (the c3 tools themselves) can link
-# stdio / string / process / memory routines.
-#
-# .a (RMA) sources: rewrite OS-9 syscall names to codes (os9defs.sed), run the
-# c3lw.awk filter, assemble with lwasm.  .c sources: full c3 pipeline.  Files
-# that assemble are archived; failures are reported (the to-do list).
-#
-# Usage:  sh buildlibc.sh        (run from c3/lwbackend)
-# Output: lwbackend/libc3.a
-set -e
-here=$(cd "$(dirname "$0")" && pwd)
-c3=$(cd "$here/.." && pwd)
-B="$c3/build/unix"
-PREP="$B/prep/c3prep"; COMP="$B/comp/c3comp"; OPTX="$B/optx/c3optx"
-FILTER="$here/c3lw.awk"; SED="$here/os9defs.sed"; IODEFS="$here/libdefs.sed"
-out="$here/libcobj"; mkdir -p "$out"
-objs=""
-
-# strip RMA-isms lwasm can't take: the `ifp1 ... endc` pass-1 header block (and
-# any bare `use` include) - the headers it pulls in are supplied separately
-# (os9defs.sed substitutions, the stdio_defs object).
-STRIP='/^[ \t]*[Ii][Ff][Pp]1/,/^[ \t]*[Ee][Nn][Dd][Cc]/d;/^[ \t]*[Uu][Ss][Ee][ \t]/d'
-
-asma() {	# asma <name> <src.a>   ($3 = "io" also applies libdefs.sed for stdio)
-	if [ "$3" = io ]; then
-		sed -e "$STRIP" "$2" | sed -f "$SED" | sed -f "$IODEFS" | awk -f "$FILTER" > "$out/$1.s" 2>/dev/null
-	else
-		sed -e "$STRIP" "$2" | sed -f "$SED" | awk -f "$FILTER" > "$out/$1.s" 2>/dev/null
-	fi
-	if lwasm --format=obj -o "$out/$1.o" "$out/$1.s" 2>"$out/$1.err"; then
-		echo "  ok   $1" >&2; objs="$objs $out/$1.o"
-	else
-		echo "  SKIP $1 ($(head -1 "$out/$1.err"))" >&2
-	fi
-}
-asmc() {	# asmc <name> <src.c>
-	# Run c3prep from c3/ with paths relative to it, so the include paths stay
-	# well inside c3prep's FNAMSIZE limit however deep the checkout is.
-	( cd "$c3" && "$PREP" -DOS9 -v=defs -v="$(dirname "${2#"$c3"/}")" \
-	    "${2#"$c3"/}" ) 2>/dev/null \
-	    | "$COMP" 2>/dev/null | "$OPTX" 2>/dev/null | awk -f "$FILTER" \
-	    > "$out/$1.s" 2>/dev/null
-	if lwasm --format=obj -o "$out/$1.o" "$out/$1.s" 2>"$out/$1.err"; then
-		echo "  ok   $1" >&2; objs="$objs $out/$1.o"
-	else
-		echo "  SKIP $1 ($(head -1 "$out/$1.err"))" >&2
-	fi
-}
-
-echo "string:" >&2
-for s in strlen strncmp strncpy strncat strings strass strclr strcmp index reverse strhcpy; do
-	[ -f "$c3/lib/lib.a/$s.a" ] && asma "$s" "$c3/lib/lib.a/$s.a"
-done
-
-echo "syscalls (sys.a):" >&2
-for s in syscommon write read open create misc mem access process intercept \
-         lseek dir stat time signal chmod syscall; do
-	[ -f "$c3/lib/sys.a/$s.a" ] && asma "$s" "$c3/lib/sys.a/$s.a"
-done
-asma getpid "$here/getpid.a"		# standalone (vs all of id.a)
-asma attach "$here/attach.a"		# I$Attach/I$Detach wrappers (not in stock lib)
-asma getenv "$here/getenv.a"		# environment stub (no OS-9 environ)
-asma mkstemp "$here/mkstemp.a"		# mkstemp -> mktemp (not in stock lib)
-asma setjmp "$here/setjmp.a"		# standalone (the stock csect form does not filter)
-
-echo "stdio (lib.a):" >&2
-# stdio routines: the FILE struct offsets/flags are substituted as literals
-# (libdefs.sed) since lwlink can't share absolute-equate exports across objects.
-for s in iob_data fopen getc putc puts fseek setbuf fread fwrite mktemp gets setbase printf scanf; do
-	[ -f "$c3/lib/lib.a/$s.a" ] && asma "$s" "$c3/lib/lib.a/$s.a" io
-done
-# printf's %ld formatter (real) + %f formatter (stub: skips the arg, no FP dep)
-asma pflong "$c3/lib/lib.a/pflinit.a"
-asma pffloat "$c3/lib/lib.a/pffdummy.a"
-
-echo "process / memory:" >&2
-asma cfinish  "$c3/lib/sys.a/cfinish.a"
-asma profdummy "$c3/lib/sys.a/profdummy.a"
-# Floating point: fpwrap.a is every float/double helper the compiler calls,
-# over the MC6839 package (FPO9).  The _fpinit/_fpterm that crt0 calls in every
-# program are NOT archived: lwlink binds crt0's call to an archive member even
-# when an explicit object also defines it, so a library default could never be
-# overridden.  Instead both providers are built below as standalone objects and
-# every link names exactly one - fpdummy.o (no-op, the default) or fpinit.o
-# (link FPO9; `c3-ld ... -l=fp.l` or `c3lw -f`).
-asma fpwrap   "$here/fpwrap.a"
-asma memory   "$c3/lib/lib.a/memory.a" io
-asma calloc   "$c3/lib/lib.a/calloc.a"
-asma atoi     "$c3/lib/lib.a/atoi.a"
-asma xtoa     "$c3/lib/lib.a/xtoa.a"		# itoa/utoa (pulled in by mktemp)
-asma case     "$c3/lib/lib.a/case.a"		# toupper/tolower (use _chcodes)
-asma findstr  "$c3/lib/lib.a/findstr.a"	# findstr (substring position)
-asma skip     "$c3/lib/lib.a/skip.a"		# skipbl/skipwd
-asma memset   "$c3/lib/lib.a/memset.a"
-asma strnucmp "$c3/lib/lib.a/strnucmp.a"	# case-blind strncmp
-asma system   "$c3/lib/lib.a/system.a"		# run a command line with the shell
-asma gs2      "$c3/lib/lib.a/gs2.a"		# _gs_rdy/_gs_opt/_gs_eof/_gs_devn/_gs_gfd
-asma ss1      "$c3/lib/lib.a/ss1.a"		# _ss_opt/_ss_rel/_ss_ssig/_ss_rest/_ss_pfd/_ss_tiks
-asmc getopt   "$c3/lib/lib.c/getopt.c"
-[ -f "$c3/lib/lib.a/chcodes.c" ] && asmc chcodes "$c3/lib/lib.a/chcodes.c"
-
-echo "archiving libc3.a:" >&2
-rm -f "$here/libc3.a"
-# shellcheck disable=SC2086
-lwar -c "$here/libc3.a" $objs
-echo "  libc3.a: $(echo $objs | wc -w | tr -d ' ') modules" >&2
-
-echo "FP startup objects (every link names exactly one of these):" >&2
-for s in fpdummy fpinit; do
-	objs=""
-	asma $s "$here/$s.a"
-	[ -n "$objs" ] && cp "$out/$s.o" "$here/$s.o"
-done
+# Build libc from its one canonical source, pinned in nitros9-c-libs.revision.
+set -eu
+. "$(dirname "$0")/shared-lib.sh"
+python3 "$lib_source/c3/build.py" --c3 "$c3" --out "$c3/.libc"
+cp "$c3/.libc/libc3.a" "$here/libc3.a"
+python3 - "$c3/.libc/BUILD.json" "$here/LIBC.json" "$lib_revision" <<'META'
+import json,sys
+from pathlib import Path
+metadata=json.loads(Path(sys.argv[1]).read_text())
+metadata.update(url='https://github.com/nitros9project/nitros9-c-libs.git',revision=sys.argv[3])
+Path(sys.argv[2]).write_text(json.dumps(metadata,indent=2)+'\n')
+META
+printf 'Built canonical nitros9-c-libs at %s\n' "$lib_revision"

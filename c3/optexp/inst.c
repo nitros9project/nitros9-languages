@@ -1,9 +1,14 @@
 #include "op.h"
+
+#ifdef OS9
+/* Kreider names the same substring-search contract findstr(). */
+#define strstr findstr
+#endif
 #include <string.h>
 
 DIRECT int      inscount;
 int             insmax = MAXINS;
-DIRECT chain    ilist;
+DIRECT opchain    ilist;
 DIRECT int      lbf,
                 lbdone;
 static DIRECT instruction *freeins;
@@ -100,7 +105,7 @@ instruction *insins(instruction *ins, char *mnem, char *args, label **l)
 				if (lp && lp->dest)
 					movlab(i, lp->dest);
 				if (i->llist == NULL
-				    && (chain *)i->pred != &ilist
+				    && (opchain *)i->pred != &ilist
 #if 0
 				    && (((instruction *) i->pred)->itype & CODEBRK))
 #else
@@ -160,10 +165,10 @@ instruction    *newins(void)
 
 void insref(instruction *ip, label *lp)
 {
-	register chain *rlp;
+	register opchain *rlp;
 
 	rlp = newchain();
-	rlp->pred = (chain *)ip;
+	rlp->pred = (opchain *)ip;
 	rlp->succ = lp->rlist;
 	lp->rlist = rlp;
 }
@@ -305,17 +310,13 @@ static void level2(instruction *i, char *mnem, char *args)
 		 * The successor remains in the peephole window after this emission:
 		 * future rules must preserve that flag overwrite.  Today's STD/LDD
 		 * merge leaves a store, so it continues to overwrite N/Z/V. */
-		if ((chain *)next == &ilist || (next->itype & BRANCH) ||
+		if ((opchain *)next == &ilist || (next->itype & BRANCH) ||
 			!listed(next->mnem,
-				" lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
-				" cmpa cmpb cmpd cmpx cmpy cmpu cmps "))
+				" lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts  cmpa cmpb cmpd cmpx cmpy cmpu cmps "))
 			return;
 	}
 	else if (!listed(mnem,
-		" lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts "
-		" adda addb addd adca adcb suba subb subd sbca sbcb "
-		" cmpa cmpb cmpd cmpx cmpy cmpu cmps anda andb ora orb eora eorb "
-		" bita bitb neg com lsr ror asr asl lsl rol dec inc tst clr jmp jsr "))
+		" lda ldb ldd ldx ldy ldu lds sta stb std stx sty stu sts  adda addb addd adca adcb suba subb subd sbca sbcb  cmpa cmpb cmpd cmpx cmpy cmpu cmps anda andb ora orb eora eorb  bita bitb neg com lsr ror asr asl lsl rol dec inc tst clr jmp jsr "))
 		return;
 	result[0] = lea ? '#' : '>';
 	if (comma == offset)
@@ -344,7 +345,7 @@ void rminst(void)
 	register instruction *i;
 	label          *l;
 
-	if ((chain *)(i = (instruction *)ilist.succ) == &ilist)
+	if ((opchain *)(i = (instruction *)ilist.succ) == &ilist)
 		error("removing too many instructions", NULL, NULL, NULL);
 
 	if ((i->itype & LONGBRA) == LONGBRA)
@@ -417,7 +418,7 @@ void fix(instruction *i, int direction)
 	else
 	{
 		for (c = BRALIM;
-		     c && (chain *)(ip = ip->succ) != &ilist;
+		     c && (opchain *)(ip = ip->succ) != &ilist;
 		     --c)
 		{
 			if ((ip->itype & LONGBRA) == LONGBRA)
@@ -452,7 +453,7 @@ void remins(register instruction *i)
 		remref(i, i->alt.lab);
 	}
 	else
-		freearg((chain *)i->alt.args);
+		freearg((opchain *)i->alt.args);
 	for (l = i->llist; l; l = l->nextl)
 	{			/* return labels */
 		l->dest = NULL;
@@ -470,14 +471,14 @@ void remins(register instruction *i)
 
 void remref(instruction *ip, label *lp)
 {
-	chain          *rlp,
+	opchain          *rlp,
 	               *lastrlp;
 
 	if (lp)
 	{
-		lastrlp = (chain *) & lp->rlist;
+		lastrlp = (opchain *) & lp->rlist;
 		for (; (rlp = lastrlp->succ) != NULL; lastrlp = rlp)
-			if (rlp->pred == (chain *)ip)
+			if (rlp->pred == (opchain *)ip)
 			{
 				lastrlp->succ = rlp->succ;
 				freelabel(lp);
@@ -487,47 +488,47 @@ void remref(instruction *ip, label *lp)
 	}
 }
 
-static DIRECT chain *_cfree = NULL;
+static DIRECT opchain *_cfree = NULL;
 
-chain          *newchain(void)
+opchain          *newchain(void)
 {
-	register chain *cp;
+	register opchain *cp;
 
 	if ((cp = _cfree) != NULL)
 		_cfree = cp->succ;
 	else
-		cp = (chain *)grab(sizeof(chain));
+		cp = (opchain *)grab(sizeof(opchain));
 	cp->succ = cp->pred = NULL;
 	return cp;
 }
 
-void freechain(register chain *p)
+void freechain(register opchain *p)
 {
 	p->succ = _cfree;
 	_cfree = p;
 }
 
-static DIRECT chain *safree = NULL,
+static DIRECT opchain *safree = NULL,
                *lafree = NULL;
 
 char           *newarg(int siz)
 {
-	register chain *ap;
+	register opchain *ap;
 
 	if (siz < 16)
 		if ((ap = safree) != NULL)
 			safree = ap->succ;
 		else
-			ap = (chain *)grab(16);
+			ap = (opchain *)grab(16);
 	else if ((ap = lafree) != NULL)
 		lafree = ap->succ;
 	else
-		ap = (chain *)grab(ARGSIZE + 1);
+		ap = (opchain *)grab(ARGSIZE + 1);
 	ap->succ = NULL;
 	return (char *)ap;
 }
 
-void freearg(chain *p)
+void freearg(opchain *p)
 {
 	register char  *sp;
 

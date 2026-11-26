@@ -13,3 +13,8 @@ lwbackend/fpdummy.o
 lwbackend/fpinit.o
 lwbackend/libc3.a
 lwbackend/libc3lw.a
+
+# Pinned external canonical library and generated native headers
+.libc/
+lwbackend/nitros9-c-libs/
+lwbackend/LIBC.json

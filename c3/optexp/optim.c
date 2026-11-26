@@ -7,7 +7,7 @@ DIRECT int      opsdone;
 int             labelnum = 0;
 action         *acslots[128];
 
-extern DIRECT chain *freeins;
+extern DIRECT opchain *freeins;
 extern char    *bratab[];
 
 void optinit(void)
@@ -58,7 +58,7 @@ void optim(register instruction *i)
 	i = i->pred;
 	for (;;)
 	{
-loop:		if ((chain *)i == &ilist || (chain *)(i2 = i->succ) == &ilist)
+loop:		if ((opchain *)i == &ilist || (opchain *)(i2 = i->succ) == &ilist)
 			return;
 		if (i2->llist)
 		{		/* look for jump to next instruction */
@@ -77,7 +77,7 @@ loop:		if ((chain *)i == &ilist || (chain *)(i2 = i->succ) == &ilist)
 				}
 				else if ((i->itype & CODEBRK)
 					 && i->llist == NULL
-					 && (chain *)(i = i->pred) != &ilist
+					 && (opchain *)(i = i->pred) != &ilist
 					 && isconbra(i->itype)
 					 && i->alt.lab->dest == i2)
 				{
@@ -99,7 +99,7 @@ loop:		if ((chain *)i == &ilist || (chain *)(i2 = i->succ) == &ilist)
 			c = 0;
 			for (ap = a->actp; ap; ap = ap->nxtins)
 			{
-				if ((chain *)i == &ilist || i->llist)
+				if ((opchain *)i == &ilist || i->llist)
 					break;
 				if (ap->mnp && match(i->mnem, ap->mnp) == 0)
 					break;
@@ -107,7 +107,7 @@ loop:		if ((chain *)i == &ilist || (chain *)(i2 = i->succ) == &ilist)
 				{
 					if (ap->opp == one)
 					{
-						if ((chain *)i->pred == &ilist)
+						if ((opchain *)i->pred == &ilist)
 							break;
 						if (match(i->alt.args, ((instruction *) (i->pred))->alt.args) == 0)
 							break;
@@ -204,11 +204,11 @@ void finddupl(register instruction *i)
 {
 	register instruction *ip1;
 	label          *lbp;
-	chain          *rlp1,
+	opchain          *rlp1,
 	               *rlp2,
 	               *lmovp;
 
-	if ((chain *)i->pred == &ilist)
+	if ((opchain *)i->pred == &ilist)
 		return;
 	/* move labels on "bra"s to here */
 	lmovp = NULL;
@@ -230,13 +230,13 @@ void finddupl(register instruction *i)
 				rlp2 = newchain();
 				rlp2->succ = lmovp;
 				lmovp = rlp2;
-				lmovp->pred = (chain *)ip1;
+				lmovp->pred = (opchain *)ip1;
 			}
 		}
 	while (lmovp)
 	{
 		movlab(ip1 = (instruction *)lmovp->pred, i);
-		if ((chain *)(ip1 = ip1->pred) != &ilist && (ip1->itype & BRANCH))
+		if ((opchain *)(ip1 = ip1->pred) != &ilist && (ip1->itype & BRANCH))
 		{
 			if (ip1->itype & CODEBRK)
 				remins(ip1->succ);
@@ -298,7 +298,7 @@ void finddupl(register instruction *i)
 		else
 		{
 			/* travel down instruction list */
-			for (ip1 = i->pred; (chain *)ip1 != &ilist; ip1 = ip1->pred)
+			for (ip1 = i->pred; (opchain *)ip1 != &ilist; ip1 = ip1->pred)
 			{
 				if (!(ip1->itype & CODEBRK)
 				    || (ip1->itype & (BLOCKDUP | BRANCH)))
@@ -323,7 +323,7 @@ int duplsrch(register instruction *ip1, register instruction *ip2)
 	count = 0;
 	if ((ip1b = ip1) == (ip2b = ip2))
 		return 0;
-	while ((chain *)ip1 != &ilist && (chain *)ip2 != &ilist
+	while ((opchain *)ip1 != &ilist && (opchain *)ip2 != &ilist
 	       && ip1 != ip2b && ip2 != ip1b
 	       && (ip1->itype & BRAMASK) == (ip2->itype & BRAMASK)
 	       && !(ip1->itype & BLOCKDUP)
@@ -377,7 +377,7 @@ int duplsrch(register instruction *ip1, register instruction *ip2)
 void duplrefs(label *lbp, instruction *ip)
 {
 	register instruction *ip1;
-	chain          *rlp;
+	opchain          *rlp;
 
 	/* travel down label list */
 	for (; lbp; lbp = lbp->nextl)

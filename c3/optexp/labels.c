@@ -5,13 +5,13 @@
 #endif
 */
 
-chain           ltable[128];
+opchain           ltable[128];
 DIRECT label   *lfree;
 
 void labelinit(void)
 {
 	register int    i;
-	register chain *p;
+	register opchain *p;
 
 	for (p = ltable, i = 0; i < 128; i++)
 	{
@@ -22,7 +22,7 @@ void labelinit(void)
 
 label          *inslabel(char *s)
 {
-	register chain *l;
+	register opchain *l;
 	register label *p;
 
 	p = newlabel();
@@ -34,7 +34,7 @@ label          *inslabel(char *s)
 	p->succ = (label *)l;
 	p->pred = (label *)l->pred;
 	((instruction *) (l->pred))->succ = (instruction *)p;
-	l->pred = (chain *)p;
+	l->pred = (opchain *)p;
 
 	return p;
 }
@@ -42,12 +42,12 @@ label          *inslabel(char *s)
 label          *findlabel(char *s)
 {
 	label          *p;
-	chain          *l;
+	opchain          *l;
 
 	l = &ltable[hash(s)];
 
 
-	for (p = (label *)l->succ; (chain *)p != l;)
+	for (p = (label *)l->succ; (opchain *)p != l;)
 	{
 		if (strcmp(s, p->lname) == 0)
 			return p;

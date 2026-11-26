@@ -35,15 +35,15 @@ all:
 	@echo "*        MW C Compiler  ->  NitrOS-9 (OS-9)       *"
 	@echo "*                                                *"
 	@echo "**************************************************"
-	$(foreach dir, $(dirs), (cd $(dir); $(MAKE));)
+	@set -e; for dir in $(dirs); do $(MAKE) -C $$dir; done
 
 clean:
-	$(foreach dir, $(dirs), (cd $(dir); $(MAKE) clean);)
+	@set -e; for dir in $(dirs); do $(MAKE) -C $$dir clean; done
 	rm -rf dist
 	rm -f "$(DSK)"
 
 install:
-	$(foreach dir, $(dirs), (cd $(dir); $(MAKE) install);)
+	@set -e; for dir in $(dirs); do $(MAKE) -C $$dir install; done
 
 # ---- dsk: one command -> a complete c3-on-NitrOS-9 distribution disk ---------
 # Builds the tools, then mkdsk.sh lays out an OS-9 image (mounted as the driver's

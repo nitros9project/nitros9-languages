@@ -11,7 +11,18 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef UNIX
 #include <stdint.h>
+typedef uint8_t rof_byte;
+typedef uint16_t rof_word;
+typedef uint32_t rof_sync;
+#else
+/* ROF storage fields, not general unsigned arithmetic types. The sync word
+   is a positive 32-bit constant; byte fields are stored/tested as bit masks. */
+typedef char rof_byte;
+typedef unsigned rof_word;
+typedef long rof_sync;
+#endif
 
 /* __attribute__ is a GCC extension; the c3 (6809) compiler has no notion of it
    and packs structs naturally, so define it away when not building under gcc. */
@@ -53,26 +64,26 @@ typedef int bool;
 /* definition/reference */
 
 typedef struct {
-        uint8_t            r_flag; /* type/location */
-        uint16_t        r_offset;
+        rof_byte            r_flag; /* type/location */
+        rof_word        r_offset;
 } __attribute__((packed)) def_ref;
 
 /* "module" header structure */
 
 typedef struct {
-        uint32_t        h_sync;         /* should == ROFSYNC */
-        uint16_t        h_tylan;        /* type/language/attr/revision */
-        uint8_t            h_valid;        /* asm valid? */
-        uint8_t            h_date[5];      /* creation date */
-        uint8_t            h_edit;         /* edition # */
-        uint8_t            h_spare;
+        rof_sync        h_sync;         /* should == ROFSYNC */
+        rof_word        h_tylan;        /* type/language/attr/revision */
+        rof_byte            h_valid;        /* asm valid? */
+        rof_byte            h_date[5];      /* creation date */
+        rof_byte            h_edit;         /* edition # */
+        rof_byte            h_spare;
                                         /* next, sizes of: */
-        uint16_t        h_glbl,         /* globals */
+        rof_word        h_glbl,         /* globals */
                         h_dglbl,        /* direct page globals */
                         h_data,         /* data */
                         h_ddata,        /* direct page data */
                         h_ocode;        /* code */
-        uint16_t        h_stack,
+        rof_word        h_stack,
                         h_entry;
 }       binhead;
 
@@ -183,7 +194,7 @@ void CopyGlobalDefs(void)
                         putc((flag = getc(LibFP)), ModFP);
                         putw_os9((Offset = getw_os9(LibFP)), ModFP);
                         } else
-                        fseek(LibFP, (long)(sizeof(uint8_t) + sizeof(uint16_t)), 1);
+                        fseek(LibFP, (long)(sizeof(rof_byte) + sizeof(rof_word)), 1);
         }
 }
 

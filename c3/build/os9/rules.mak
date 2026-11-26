@@ -48,8 +48,9 @@ SHELL		= /bin/bash
 
 # .c -> .r  (a 6809 relocatable object, == what the c3 driver's c3-as produces)
 %.r : %.c
-	$(PREP) $(CPPFLAGS) $< | $(COMP) | $(OPTX) | awk -f $(FILTER) \
-	    | $(LWASM) --format=obj -o $@ -
+	python3 ../../../scripts/compile-os9.py --prep "$(PREP)" --comp "$(COMP)" \
+	    --optx "$(OPTX)" --filter "$(FILTER)" --assembler "$(LWASM)" --output "$@" \
+	    -- $(CPPFLAGS) "$<"
 
 # Link an OS-9 program module from $(OBJS)  (== what c3-ld produces).  The
 # module name embedded in the file is the output basename, so link to a bare

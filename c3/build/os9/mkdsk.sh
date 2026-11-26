@@ -84,7 +84,7 @@ rm -rf "$stage"
 
 # headers: c3's own v2-ABI defs + the ROF header
 mkdir -p "$stage/defs"
-cp "$c3"/defs/*.h "$stage/defs/"
+cp "$c3"/legacy-defs/*.h "$stage/defs/"
 cp "$c3"/include/rof.h "$stage/defs/"
 
 # compiler sources

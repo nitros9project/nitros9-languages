@@ -23,7 +23,7 @@ INSTALL		?= install
 
 # The host driver looks for its headers under $(C3BASE_DEFAULT)/defs when
 # $C3BASE is unset; build it to find the installed ones.
-HOSTFLAGS	= C3BASE_DEFAULT=$(C3BASE)
+HOSTFLAGS	= C3BASE_DEFAULT=$(C3BASE) CPPFLAGS="$(CPPFLAGS) -D_DEFAULT_SOURCE"
 # Point the cross-build at the host stages and runtime built here, instead of
 # an installed toolchain on the PATH.
 OS9FLAGS	= C3BASE=$(CURDIR) C3LIBDIR=$(LWDIR) \
@@ -87,7 +87,7 @@ ontarget: $(DSK)
 install: runtime
 	$(RM) $(HOSTDIR)/exec/c3.o $(HOSTDIR)/exec/c3
 	$(MAKE) -C $(HOSTDIR)/exec $(HOSTFLAGS)
-	$(INSTALL) -d $(BINDIR) $(C3DEFSDIR)/cgfx
+	$(INSTALL) -d $(BINDIR) $(C3DEFSDIR)
 	$(INSTALL) $(HOSTDIR)/exec/c3 $(HOSTDIR)/prep/c3prep \
 	    $(HOSTDIR)/comp/c3comp $(HOSTDIR)/comp1/c3comp1 \
 	    $(HOSTDIR)/comp2/c3comp2 $(HOSTDIR)/optx/c3optx \
@@ -96,13 +96,13 @@ install: runtime
 	$(INSTALL) -m 0644 $(LWDIR)/c3lw.awk $(LWDIR)/os9c3.ld \
 	    $(LWDIR)/crt0.o $(LWDIR)/fpdummy.o $(LWDIR)/fpinit.o \
 	    $(LWDIR)/libc3.a $(LWDIR)/libc3lw.a $(BINDIR)
-	$(INSTALL) -m 0644 defs/*.h $(C3DEFSDIR)
-	$(INSTALL) -m 0644 defs/cgfx/*.h $(C3DEFSDIR)/cgfx
+	cp -R .libc/include/. $(C3DEFSDIR)/
+	$(INSTALL) -m 0644 $(LWDIR)/LIBC.json $(C3DEFSDIR)/LIBC.json
 
 # Clean all components
 clean:
 	$(MAKE) -C $(HOSTDIR) clean
 	$(MAKE) -C $(OS9DIR) clean
-	$(RM) -r $(LWDIR)/obj $(LWDIR)/libcobj
+	$(RM) -r $(LWDIR)/obj $(CURDIR)/.libc
 	$(RM) $(LWDIR)/crt0.o $(LWDIR)/fpdummy.o $(LWDIR)/fpinit.o \
 	    $(LWDIR)/libc3.a $(LWDIR)/libc3lw.a $(DSK)

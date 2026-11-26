@@ -12,7 +12,7 @@
 #
 # Requires the c3 unix build (build/unix/{prep,comp,optx}), the runtime built
 # by buildrt.sh (crt0.o + libc3lw.a) and the C library built by buildlibc.sh
-# (libc3.a, which also holds the floating-point helpers, + fpdummy.o/fpinit.o).
+# (canonical libc3.a). Compiler-owned FP primitives are in libc3lw.a.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 c3=$(cd "$here/.." && pwd)
@@ -37,7 +37,7 @@ done
 base=$(basename "$src" .c)
 [ -n "$out" ] || case "$stop" in asm) out=$base.s;; obj) out=$base.o;; link) out=$base.mod;; esac
 
-"$PREP" "$src" | "$COMP" | "$OPTX" | awk -f "$FILTER" > "$base.lw.s"
+"$PREP" -DOS9 -v="$c3/defs" "$src" | "$COMP" | "$OPTX" | awk -f "$FILTER" > "$base.lw.s"
 [ "$stop" = asm ] && { mv "$base.lw.s" "$out"; echo "$out"; exit 0; }
 
 lwasm --format=obj -o "$base.o" "$base.lw.s"
