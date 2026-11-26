@@ -219,7 +219,7 @@ void argdef(void)
 
 	if ((type = settype(&size,&dimptr,&eptr)) == 0)
 	{
-		// argument's type is inferred here
+		/* argument's type is inferred here */
 		type = INT;
 	}
 
@@ -313,7 +313,7 @@ void blkdef(void)
 
 	if ((type = settype(&size,&dimptr,&eptr)) == 0)
 	{
-		// type is inferred
+		/* type is inferred */
 		type = INT;
 	}
 
@@ -505,7 +505,7 @@ void newfunc(symnode *fptr, int sclass)
 
 	while (sym != LBRACE)
 	{
-		// Pick up K&R style function arguments here
+		/* Pick up K&R style function arguments here */
 		argdef();
 	}
 
