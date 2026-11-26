@@ -11,7 +11,13 @@
 
 char *dumname = sdummy.sname;
 
+#ifdef UNIX
+/* Host mktemp requires at least six trailing Xs (notably on glibc). */
+char strname[] = "cstr.XXXXXX";
+#else
+/* The native OS-9 routine consumes five Xs. */
 char strname[] = "cstr.XXXXX";
+#endif
 
 #ifdef  SPLIT
 direct char *infile;
