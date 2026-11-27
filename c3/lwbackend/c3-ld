@@ -21,11 +21,16 @@ while [ -L "$self" ]; do
 	case "$link" in /*) self=$link ;; *) self=$(dirname "$self")/$link ;; esac
 done
 home=${C3LW_HOME:-$(cd "$(dirname "$self")" && pwd)}
-out=; objs=; fp="$home/fpdummy.o"
+out=; objs=; extra=; libc=c3; fp="$home/fpdummy.o"
 for a in "$@"; do
 	case "$a" in
 		-o=*)     out=${a#-o=} ;;
-		-l=*fp.l) fp="$home/fpinit.o" ;;	# opt in to MC6839 floating point
+		-l=*clibf.l|-l=*libc3f.a) libc=c3f; fp="$home/fpinit.o" ;;
+		-l=*cgfx.l|-l=*libcgfx.a) extra="$extra -lcgfx" ;;
+		-l=*termcap.l|-l=*libtermcap.a) extra="$extra -ltermcap" ;;
+		-l=*alib.l|-l=*libalib.a) extra="$extra -lalib" ;;
+		-l=*dbg.l|-l=*libdbg.a) extra="$extra -ldbg" ;;
+		-l=*fp.l) libc=c3f; fp="$home/fpinit.o" ;;	# opt in to MC6839 floating point
 		-l=*|-y)  ;;			# Microware library specs - ignored
 		-*)       ;;			# other rlink flags (-m, -e, ...) - ignored
 		*cstart*) ;;			# Microware C startup - replaced by crt0.o
@@ -35,4 +40,4 @@ done
 [ -n "$out" ] || { echo "c3-ld: no -o=output" >&2; exit 2; }
 [ -f "$fp" ] || { echo "c3-ld: $fp not found (run buildlibc.sh)" >&2; exit 2; }
 # shellcheck disable=SC2086
-lwlink --format=os9 -s "$home/os9c3.ld" -o "$out" "$home/crt0.o" $objs $fp "-L$home" "-lc3" "-lc3lw"
+lwlink --format=os9 -s "$home/os9c3.ld" -o "$out" "$home/crt0.o" $objs $fp "-L$home" $extra "-l$libc" "-lc3lw"

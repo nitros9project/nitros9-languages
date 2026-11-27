@@ -36,7 +36,7 @@ __dmy: fcb 0
  vsect
 argv: rmb 2*MAXARGS pointers to args
 argc rmb 2 argument counter
-_sttop rmb 2 stack top
+_sttop: rmb 2 stack top
  endsect
 
 * the following are globally known
