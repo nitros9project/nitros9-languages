@@ -8,6 +8,11 @@ spec.loader.exec_module(rma)
 
 
 class RmaLibraryTests(unittest.TestCase):
+    def test_stack_checker_uses_the_compiler_startup_alias(self):
+        result=rma.convert(' extern _stkcheck\n section code\n lbsr _stkcheck\n endsection\n','stack')
+        self.assertIn(' lbsr _stkchec\n',result)
+
+
     def test_macro_calls_keep_the_renamed_definition(self):
         result=rma.convert(' section code\nnegd macro\n nega\n negb\n sbca #0\n endm\n negd\n endsection\n','macro')
         import re

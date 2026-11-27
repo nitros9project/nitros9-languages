@@ -83,7 +83,7 @@ int main(void)''')
         target = work/(name+'.a')
         target.write_bytes(content)
         os9('copy', '-r', '-l', target, guest('C3/src/rma/'+target.name))
-    lines = ['chx /dd/cmds', 'chd /dd/c3/src', 'shell <mklibs >rma-build.log',
+    lines = ['-x', 'chx /dd/cmds', 'chd /dd/c3/src', 'shell <mklibs >rma-build.log',
              'echo RMALIBBUILT', 'chd /dd/c3/src/rma']
     for name in ('nb0', 'nb2'):
         # Microware rlink expects a relative output name in the execution

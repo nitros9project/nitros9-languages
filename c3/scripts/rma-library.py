@@ -111,7 +111,9 @@ def convert(text, name):
     for label, op, arg in rows:
         if op in ('external', 'extern', 'import'):
             symbol = label or arg.split()[0]
-            if len(symbol) > 8:
+            if symbol=='_stkcheck':
+                names[symbol]='_stkchec'
+            elif len(symbol) > 8:
                 names[symbol] = 'z' + hashlib.sha256(symbol.encode()).hexdigest()[:7]
     if len(set(names.values())) != len(names):
         raise ValueError('RMA symbol collision in ' + name)
