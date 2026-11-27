@@ -102,7 +102,7 @@ lib_source=${NITROS9_C_LIBS_DIR:-$c3/lwbackend/nitros9-c-libs}
     echo 'mkdsk: canonical source revision mismatch; rebuild runtime' >&2; exit 1;
 }
 mkdir -p "$stage/src/nitros9-c-libs"
-for d in lib include c3; do
+for d in lib include c3 math cgfx asm termcap; do
     # git archive excludes generated build outputs and records only the pin.
     git -C "$lib_source" archive HEAD "$d" | tar -xf - -C "$stage/src/nitros9-c-libs"
 done

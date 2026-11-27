@@ -234,11 +234,25 @@ pinned canonical source under `C3/src/nitros9-c-libs`, and compiler sources unde
 sources requires the host build. Startup (`lwbackend/cstart.a`) and FP primitives
 remain compiler-owned. `LIBC.json` on the disk records the canonical revision.
 
-All paths share the current core/non-floating-stdio library profile. The removed
-historical CGFX and full floating-stdio archives are not alternate sources;
-additional C3 library support belongs in nitros9-c-libs. Library regression
-sources remain in `test/`; the obsolete `scripts/ctest` disk helper was removed
-because it selected those unmaintained local archives.
+The canonical dependency also supplies full floating stdio, scanf/atof and math,
+CGFX, terminal parameter expansion/ttytype lookup, environment files, legacy OS-9
+calls, register-ABI assembler utilities, and debug tracing. The assembly bodies
+remain in nitros9-c-libs. See [the companion port](https://github.com/nitros9project/nitros9-c-libs/pull/41)
+and its migration manifest for source provenance and baseline-incomplete files.
+
+Host and installed builds include `libc3f.a`, `libcgfx.a`, `libtermcap.a`,
+`libalib.a`, and `libdbg.a` beside the compact `libc3.a`. Select them with
+`-l=fp.l`/`-l=clibf.l`, `-l=cgfx.l`, `-l=termcap.l`, `-l=alib.l`, or `-l=dbg.l`.
+Floating execution requires FPO9. The default printf float stub remains compact.
+`alib` uses assembly register contracts, not C argument conventions.
+
+On-target `mklibs` builds `clib.l`, `clibf.l`, `clibt.l`, `cgfx.l`, `termcap.l`,
+`alib.l`, `dbg.l`, `fp.l`, and startup/system support. Use `clibf.l` for complete
+floating stdio; `fp.l` also retains the historical `pffinit()` link anchor.
+The original assembler-utility source is assembled directly to retain its
+register ABI and dollar-symbol spellings. Other RMA units derive from the exact
+canonical archive members, including direct-page storage and macro selection.
+No compiler-local library source is restored.
 
 RMA checks, after `make dsk COCOC=/path/to/CoCoC`:
 
@@ -273,4 +287,7 @@ python3 scripts/check-rma-runtime.py --disk c3.dsk \
 ```
 
 Use a fresh output directory for each run. Add `--self-host` to include the
-currently failing target-compiler smoke test.
+currently failing target-compiler smoke test. Add `--features` to run all migrated
+feature probes at both optimization levels; build the distribution with
+`FPO9=/path/to/Float09.bin` first. This test assembles and links on the actual
+OS-9 kernel, independently of the host assembler bridge.

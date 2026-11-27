@@ -8,6 +8,22 @@ spec.loader.exec_module(rma)
 
 
 class RmaLibraryTests(unittest.TestCase):
+    def test_macro_calls_keep_the_renamed_definition(self):
+        result=rma.convert(' section code\nnegd macro\n nega\n negb\n sbca #0\n endm\n negd\n endsection\n','macro')
+        import re
+        name=re.search(r'^(\w+) macro$',result,re.M)[1]
+        self.assertIn(' '+name+'\n',result)
+        self.assertNotIn(' negd\n',result)
+
+    def test_direct_page_reservations_remain_direct_page(self):
+        result=rma.convert(' section directpage\ncount: rmb 1\n endsection\n','dp')
+        self.assertIn(' vsect dp\n',result)
+
+    def test_byte_complement_is_truncated_to_the_operand_width(self):
+        result=rma.convert(' section code\nmask equ ^$80\n lda #mask\n endsection\n','byte')
+        self.assertIn(' lda #127\n',result)
+
+
     def test_initialized_pointer_image_becomes_relocatable_vsect(self):
         text = ''' export table
  extern target
@@ -38,7 +54,7 @@ table equ unit.bss.0+(unit.il.0.0-unit.img.0)
     def test_absolute_bit_expressions_do_not_reach_old_rma(self):
         result = rma.convert(' section code\na equ $01\nb equ $04\nmask equ a|b\n bitb #mask\n andb #^(a|b)\n endsection\n', 'l002')
         self.assertIn(' bitb #5', result)
-        self.assertIn(' andb #-6', result)
+        self.assertIn(' andb #250', result)
         self.assertNotIn('|', result)
 
     def test_long_external_spelling_matches_provider(self):

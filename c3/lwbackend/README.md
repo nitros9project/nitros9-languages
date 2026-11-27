@@ -86,7 +86,7 @@ float/double arithmetic uses the MC6839 IEEE package (the `FPO9` module from
 **opts in** to floating point at link time:
 
 * host: `c3lw -f`, or pass the driver the on-target spelling `-l=/dd/c3/lib/fp.l`
-  (`c3-ld` maps any `-l=…fp.l` to `fpinit.o`);
+  (`c3-ld` selects `fpinit.o` and the canonical full floating stdio archive);
 * on OS-9: `c3 -2 prog.c -l=/dd/c3/lib/fp.l` (`mklibs` builds `fp.l`).
 
 Without the opt-in a program gets the no-op `fpdummy`, never links FPO9, and
@@ -185,4 +185,10 @@ C library and integer/long arithmetic changes belong in nitros9-c-libs.
   `name,u`).
 * The C library is ported as `libc3.a` (`buildlibc.sh`), which the
   `build/os9` cross-build and the `c3-ld` shim link. Modules that don't assemble through the filter
-  are reported by `buildlibc.sh` and left out.
+  fail the build; no required source is silently omitted.
+
+Optional canonical archives are also staged and installed: full floating stdio
+(`-l=fp.l` or `-l=clibf.l`), CGFX (`-l=cgfx.l`), terminal helpers
+(`-l=termcap.l`), register-ABI utilities (`-l=alib.l`), and debug tracing
+(`-l=dbg.l`). Their library sources live only in nitros9-c-libs. The native RMA
+distribution exports all profiles from that same pin.

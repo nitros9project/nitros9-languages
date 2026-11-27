@@ -98,7 +98,8 @@ install: runtime
 	    $(LWDIR)/c3-as $(LWDIR)/c3-ld $(LWDIR)/c3lw $(BINDIR)
 	$(INSTALL) -m 0644 $(LWDIR)/c3lw.awk $(LWDIR)/os9c3.ld \
 	    $(LWDIR)/crt0.o $(LWDIR)/fpdummy.o $(LWDIR)/fpinit.o \
-	    $(LWDIR)/libc3.a $(LWDIR)/libc3lw.a $(BINDIR)
+	    $(LWDIR)/libc3.a $(LWDIR)/libc3f.a $(LWDIR)/libcgfx.a \
+	    $(LWDIR)/libtermcap.a $(LWDIR)/libalib.a $(LWDIR)/libdbg.a $(LWDIR)/libc3lw.a $(BINDIR)
 	cp -R .libc/include/. $(C3DEFSDIR)/
 	$(INSTALL) -m 0644 $(LWDIR)/LIBC.json $(C3DEFSDIR)/LIBC.json
 
@@ -108,4 +109,5 @@ clean:
 	$(MAKE) -C $(OS9DIR) clean
 	$(RM) -r $(LWDIR)/obj $(CURDIR)/.libc $(CURDIR)/.rma
 	$(RM) $(LWDIR)/crt0.o $(LWDIR)/fpdummy.o $(LWDIR)/fpinit.o \
-	    $(LWDIR)/libc3.a $(LWDIR)/libc3lw.a $(DSK)
+	    $(LWDIR)/libc3.a $(LWDIR)/libc3f.a $(LWDIR)/libcgfx.a \
+	    $(LWDIR)/libtermcap.a $(LWDIR)/libalib.a $(LWDIR)/libdbg.a $(LWDIR)/libc3lw.a $(DSK)

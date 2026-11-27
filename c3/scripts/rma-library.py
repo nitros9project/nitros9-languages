@@ -133,6 +133,7 @@ def convert(text, name):
             return str(constants[token]) if token in constants else names.get(token, token)
         return TOKEN.sub(replace, value)
 
+    macros={label for label,op,_ in rows if op=='macro'}
     output = [' psect ' + name[:8] + ',0,0,0,0,0']
     section = None
     vsect = False
@@ -142,8 +143,8 @@ def convert(text, name):
                 output.append(' endsect')
                 vsect = False
             section = arg.split()[0].lower()
-            if section in ('bss', 'data'):
-                output.append(' vsect')
+            if section in ('bss', 'data', 'directpage'):
+                output.append(' vsect dp' if section=='directpage' else ' vsect')
                 vsect = True
             elif section not in ('code', 'irec', 'ireloc', 'icreloc'):
                 raise ValueError('Unsupported section ' + section)
@@ -165,7 +166,7 @@ def convert(text, name):
         prefix = names.get(label, label) + (':' if label in exports else '') if label else ''
         if op == 'zmb':
             # Initialized zero bytes must remain initialized in a vsect.
-            count = int(arg, 0)
+            count = expression(clean_operand(arg), constants)
             if prefix:
                 output.append(prefix)
             for start in range(0, count, 24):
@@ -182,7 +183,11 @@ def convert(text, name):
             if value:
                 output.append(' fcb ' + ','.join(str(ord(c)) for c in value))
             continue
-        output.append(prefix + (' ' + op + (' ' + operand(arg) if arg else '') if op else ''))
+        selected=operand(arg) if arg else ''
+        if op in ('anda','andb','ora','orb','eora','eorb','andcc','orcc','lda','ldb','cmpa','cmpb','bita','bitb','adda','addb','suba','subb','adca','adcb','sbca','sbcb') and re.fullmatch(r'#-?\d+',selected):
+            selected='#'+str(int(selected[1:])&255)
+        opcode=names.get(op,op) if op in macros else op
+        output.append(prefix + (' ' + opcode + (' ' + selected if selected else '') if opcode else ''))
     if vsect:
         output.append(' endsect')
     output.append(' endsect')
@@ -215,83 +220,88 @@ def main():
     parser.add_argument('--c3', type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument('--out', type=Path, required=True)
     args = parser.parse_args()
-    c3 = args.c3.resolve()
-    manifest = json.loads((c3/'lwbackend/LIBC.json').read_text())
-    pin = (c3/'nitros9-c-libs.revision').read_text().strip()
-    digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
-    if manifest['revision'] != pin or manifest['library_sha256'] != digest(c3/'.libc/libc3.a'):
+    c3=args.c3.resolve();build=c3/'.libc';out=args.out.resolve();out.mkdir(parents=True,exist_ok=True)
+    manifest=json.loads((c3/'lwbackend/LIBC.json').read_text())
+    pin=(c3/'nitros9-c-libs.revision').read_text().strip()
+    digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+    if manifest['revision']!=pin or manifest['library_sha256']!=digest(build/'libc3.a'):
         raise ValueError('Rebuild the pinned canonical runtime before staging RMA sources')
-    listing = subprocess.check_output(['lwar', '-l', str(c3/'.libc/libc3.a')], text=True)
-    members = [Path(line.rsplit(': ', 1)[0]).stem for line in listing.splitlines() if line.strip()]
-    if len(members) != manifest['archive_members']:
-        raise ValueError('Canonical archive membership mismatch')
-    out = args.out.resolve()
-    out.mkdir(parents=True, exist_ok=True)
-    sources = []
-    units = []
-    for i, member in enumerate(members):
-        filename = 'l%03d' % i
-        text = (c3/'.libc'/(member+'.s')).read_text()
-        exports, references = set(), set()
-        for line in text.splitlines():
-            label, op, arg = fields(uncomment(line))
-            if op == 'export':
-                exports.add(label or arg.split()[0])
-            elif op in ('extern', 'external', 'import'):
-                references.add(label or arg.split()[0])
-        units.append((exports, references))
-        (out/(filename+'.a')).write_text(convert(text, filename))
-        sources.append({'file':filename, 'canonical_member':member})
-    scans = library_scans(units)
-    # Small commands stay below the native shell's line-length limit. rlink
-    # scans a concatenated ROF library once, so repeat the member list enough
-    # times to resolve back references (validated by the native kernel probe).
-    commands = ['* Generated from nitros9-c-libs ' + pin, 'chd /dd/c3/src/rma',
-                'shell <cleanup >/nil >>/nil', 'x']
-    for item in sources:
-        n = item['file']
-        commands.append('rma ' + n + '.a -o=' + n + '.r')
-    for n in ('cstart', 'fpwrap', 'fpdummy', 'fpinit', 'sysstub'):
-        commands.append('rma ' + n + '.a -o=' + n + '.r')
-    chunks = []
-    objects = [item['file']+'.r' for item in sources] + ['fpwrap.r', 'fpdummy.r']
-    for i in range(0, len(objects), 8):
-        chunk = 'p%03d.l' % (i//8)
-        commands.append('merge ' + ' '.join(objects[i:i+8]) + ' >' + chunk)
-        chunks.append(chunk)
-    commands.append('merge ' + ' '.join(chunks) + ' >full.l')
-    commands.extend(['merge ' + ' '.join(['full.l'] * scans) + ' >/dd/c3/lib/clib.l',
-                     'merge cstart.r >/dd/c3/lib/cstart.r', 'merge fpinit.r >/dd/c3/lib/fp.l',
-                     'merge sysstub.r >/dd/c3/lib/sys.l',
-                     'echo canonical c3 libraries built'])
-    # A second merge level avoids overflowing the shell on large member lists.
-    merge = next(i for i, line in enumerate(commands) if line.startswith('merge p000.l'))
-    middle = []
-    replacement = []
-    for i in range(0, len(chunks), 8):
-        n = 'q%03d.l' % (i//8)
-        replacement.append('merge ' + ' '.join(chunks[i:i+8]) + ' >' + n)
-        middle.append(n)
-    commands[merge:merge+1] = replacement + ['merge ' + ' '.join(middle) + ' >full.l']
-    # These are compiler-owned startup/FP sources, not C library copies.
-    for name in ('cstart', 'fpwrap', 'fpdummy', 'fpinit'):
-        text = subprocess.check_output(['sed', '-f', str(c3/'lwbackend/os9defs.sed'),
-                                        str(c3/'lwbackend'/(name+'.a'))], text=True)
-        (out/(name+'.a')).write_text(text)
+    profiles={'libc3.a':'clib.l','libc3f.a':'clibf.l','libcgfx.a':'cgfx.l',
+              'libtermcap.a':'termcap.l','libalib.a':'alib.l','libdbg.a':'dbg.l'}
+    members={};sources=[];units={};staged={}
+    for archive in profiles:
+        listing=subprocess.check_output(['lwar','-l',str(build/archive)],text=True)
+        members[archive]=[Path(line.rsplit(': ',1)[0]).stem for line in listing.splitlines() if line.strip()]
+        expected=manifest if archive=='libc3.a' else manifest['variants'][archive]
+        if len(members[archive])!=expected['archive_members'] or digest(build/archive)!=expected['library_sha256']:
+            raise ValueError('Canonical archive membership/hash mismatch: '+archive)
+        for member in members[archive]:
+            if member in staged:continue
+            filename='l%03d'%len(sources);staged[member]=filename
+            text=(build/(member+'.s')).read_text(encoding='latin1')
+            exports,references=set(),set()
+            for line in text.splitlines():
+                label,op,arg=fields(uncomment(line))
+                if op=='export':exports.add(label or arg.split()[0])
+                elif op in ('extern','external','import'):references.add(label or arg.split()[0])
+                else:references.update(TOKEN.findall(arg))
+            units[member]=(exports,references)
+            (out/(filename+'.a')).write_text(convert(text,filename))
+            sources.append({'file':filename,'canonical_member':member})
+    # Preserve the register library's historical symbol spellings on native
+    # OS-9. These source units already have the required register ABI.
+    canonical=Path(__import__('os').environ.get('NITROS9_C_LIBS_DIR',c3/'lwbackend/nitros9-c-libs'))
+    for member,filename in staged.items():
+        if member.startswith('libalib_'):
+            source=canonical/'asm'/(member.removeprefix('libalib_')+'.a')
+            text=source.read_bytes().decode('latin1')
+            text=re.sub(r'(?mi)^([ \t]*)esect\b',r'\1endsect',text)
+            (out/(filename+'.a')).write_bytes(text.encode('latin1'))
+    commands=['* Generated from nitros9-c-libs '+pin,'chd /dd/c3/src/rma','shell <cleanup >/nil >>/nil','x']
+    for item in sources:commands.append('rma '+item['file']+'.a -o='+item['file']+'.r')
+    for name in ('cstart','fpwrap','fpdummy','fpinit','sysstub'):
+        commands.append('rma '+name+'.a -o='+name+'.r')
+        if name!='sysstub':
+            text=subprocess.check_output(['sed','-f',str(c3/'lwbackend/os9defs.sed'),str(c3/'lwbackend'/(name+'.a'))],text=True)
+            (out/(name+'.a')).write_text(text)
     (out/'sysstub.a').write_text(' psect sysstub,0,0,0,0,0\n endsect\n')
-    generated = [item['file']+'.r' for item in sources]
-    generated += [name+'.r' for name in ('cstart', 'fpwrap', 'fpdummy', 'fpinit', 'sysstub')]
-    generated += chunks + middle + ['full.l']
-    generated += ['/dd/c3/lib/'+name for name in ('clib.l', 'cstart.r', 'fp.l', 'sys.l')]
-    # Shell 2.1 and Shell+ assign different meanings to >>>. Remove only the
-    # named generated outputs in a quiet error-tolerant subshell, then build
-    # with ordinary portable redirection and fail on any assembly/link error.
+    generated=[item['file']+'.r' for item in sources]
+    generated += [name+'.r' for name in ('cstart','fpwrap','fpdummy','fpinit','sysstub')]
+    scans={}
+    def merge_tree(objects,prefix):
+        level=0
+        while len(objects)>8:
+            merged=[]
+            for i in range(0,len(objects),8):
+                name=prefix+str(level)+'%03d.l'%(i//8)
+                commands.append('merge '+' '.join(objects[i:i+8])+' >'+name)
+                generated.append(name);merged.append(name)
+            objects=merged;level+=1
+        name=prefix+'full.l';commands.append('merge '+' '.join(objects)+' >'+name);generated.append(name)
+        return name
+    for i,(archive,target) in enumerate(profiles.items()):
+        objects=[staged[m]+'.r' for m in members[archive]]
+        selected=[units[m] for m in members[archive]]
+        scans[archive]=library_scans(selected)
+        if archive in ('libc3.a','libc3f.a'):
+            objects += ['fpwrap.r','fpinit.r' if archive=='libc3f.a' else 'fpdummy.r']
+        full=merge_tree(objects,chr(ord('a')+i))
+        commands.append('merge '+' '.join([full]*scans[archive])+' >/dd/c3/lib/'+target)
+        generated.append('/dd/c3/lib/'+target)
+    # clibt was the historical transcendental alternative. The canonical
+    # native core contains the same math entries, loaded only when referenced.
+    commands += ['merge /dd/c3/lib/clib.l >/dd/c3/lib/clibt.l',
+                 'merge cstart.r >/dd/c3/lib/cstart.r',
+                 'merge fpinit.r '+staged['pffinit']+'.r '+staged['ftoa']+'.r >/dd/c3/lib/fp.l',
+                 'merge sysstub.r >/dd/c3/lib/sys.l','echo canonical c3 libraries built']
+    generated += ['/dd/c3/lib/'+n for n in ('clibt.l','cstart.r','fp.l','sys.l')]
+    if max(map(len,commands))>128:raise ValueError('Native shell command exceeds 128 characters')
     (out/'cleanup').write_text('-x\n'+'\n'.join('del '+name for name in generated)+'\n')
     (out/'mklibs').write_text('\n'.join(commands)+'\n')
-    (out/'LIBC.json').write_text(json.dumps(dict(manifest, rma_members=sources, rma_library_scans=scans,
+    (out/'LIBC.json').write_text(json.dumps(dict(manifest,rma_members=sources,
+        rma_total_members=len(sources),rma_library_scans=scans['libc3.a'],rma_profiles=scans,
         rma_exporter_sha256=digest(Path(__file__)),
-        rma_sources_sha256={p.name:digest(p) for p in sorted(out.glob('*.a'))}), indent=2)+'\n')
+        rma_sources_sha256={p.name:digest(p) for p in sorted(out.glob('*.a'))}),indent=2)+'\n')
 
 
-if __name__ == '__main__':
-    main()
+if __name__=='__main__':main()

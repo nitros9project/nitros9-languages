@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--emulator', default='usim09pt')
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--wall-seconds', type=int, default=180)
+    parser.add_argument('--features',action='store_true',help='Also execute migrated feature probes; distribution must contain FPO9')
     parser.add_argument('--self-host', action='store_true', help='Also compile and run hello using the target compiler')
     args = parser.parse_args()
     c3 = Path(__file__).resolve().parents[1]
@@ -90,6 +91,31 @@ int main(void)''')
         lines += ['rma '+name+'.a -o='+name+'.r',
                   'rlink /dd/c3/lib/cstart.r '+name+'.r -o='+name+' -l=/dd/c3/lib/clib.l',
                   name+' >'+name+'.out >>'+name+'.err']
+    feature_programs=[]
+    if args.features:
+        if not (tree/'Modules/FPO9').exists():raise ValueError('Feature probes require FPO9 in the distribution')
+        os9('copy','-r',tree/'Modules/FPO9',guest('Modules/FPO9'))
+        features={'scanf':('clibf.l','SCAN'),'float':('clibf.l','FLOAT'),
+            'math':('clibf.l','MATH'),'cgfx':('cgfx.l','CGFX'),
+            'alib':('alib.l','ALIB'),'termcap':('termcap.l','TERMCAP'),
+            'env':('','ENV'),'system':('','SYSTEM'),'debug':('dbg.l','DEBUG')}
+        for feature,(library,marker) in features.items():
+            test=work/(feature+'.c')
+            test.write_text(native.c_view((source/'c3/tests'/('parity-'+feature+'.c')).read_text()))
+            prep=run([c3/'build/unix/prep/c3prep','-DOS9','-v='+str(c3/'defs'),test],cwd=work)
+            assembly=run([c3/'build/unix/comp/c3comp','-s'],input=prep)
+            if b'****' in prep+assembly:raise RuntimeError((prep+assembly).decode(errors='replace'))
+            for opt in (0,2):
+                name='p'+feature[:5]+str(opt)
+                target=work/(name+'.a')
+                target.write_bytes(run([c3/'build/unix/optx/c3optx'],input=assembly) if opt else assembly)
+                os9('copy','-r','-l',target,guest('C3/src/rma/'+target.name))
+                libs=['-l=../../lib/'+library] if library else []
+                if library!='clibf.l':libs.append('-l=../../lib/clib.l')
+                lines += ['rma '+name+'.a -o='+name+'.r',
+                    'rlink ../../lib/cstart.r '+name+'.r -o='+name+' '+' '.join(libs),
+                    name+' >'+name+'.out >>'+name+'.err']
+                feature_programs.append((name,marker))
     if args.self_host:
         hello = work/'hello.c'
         hello.write_text('#include <stdio.h>\nmain() { printf("C3 TARGET PASS\\r"); return 0; }\n')
@@ -141,6 +167,14 @@ int main(void)''')
         if actual != {'out':'OS9TEXT PASS\r', 'err':'OS9TEXT STDERR\r'}:
             raise RuntimeError(name+' failed: '+repr(actual))
         results['programs'].append({'name':name, 'status':'PASS'})
+    for name,marker in feature_programs:
+        actual={}
+        for extension in ('out','err'):
+            target=work/(name+'.'+extension)
+            os9('copy','-r',guest('C3/src/rma/'+target.name),target)
+            actual[extension]=target.read_bytes().decode()
+        if actual!={'out':marker+' PASS\r','err':''}:raise RuntimeError(name+' failed: '+repr(actual))
+        results['programs'].append({'name':name,'status':'PASS'})
     if args.self_host:
         os9('copy', '-r', guest('C3/src/rma/hello.out'), work/'hello.out')
         if (work/'hello.out').read_bytes() != b'C3 TARGET PASS\r':
