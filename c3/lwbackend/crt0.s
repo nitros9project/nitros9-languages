@@ -176,6 +176,7 @@ crelocd:	leas	2,s
 ; allocator and the stack check.
 		leax	s_stack,y	; end of statics = in-area heap base (ibrk)
 		stx	_mtop,y		; current non-stack memory top
+		sts	_sttop,y
 		sts	_stbot,y	; current stack bottom limit
 
 ; ---- parse the OS-9 parameter string into argc / argv -----------------------
@@ -283,9 +284,11 @@ argv:		rmb	2*MAXARGS	; argument vector
 ; these; normally set up by the Microware cstart, here by __start above).
 		export	memend
 		export	_mtop
+		export	_sttop
 		export	_stbot
 memend:		rmb	2		; top of the data area
 _mtop:		rmb	2		; current non-stack memory top (heap top)
+_sttop:		rmb	2
 _stbot:		rmb	2		; current stack bottom limit
 
 ; Empty init tables so s_/l_ for these sections are always defined even when a

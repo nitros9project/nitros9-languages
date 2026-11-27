@@ -9,8 +9,8 @@
 # crt0 calls _fpinit/_fpterm; the link names exactly one provider.  By default
 # that's fpdummy.o (no-op).  A library argument whose name ends in fp.l (e.g.
 # the on-target spelling -l=/dd/c3/lib/fp.l) opts the program into floating
-# point: fpinit.o instead, whose _fpinit links the MC6839 FPO9 module.  Every
-# other Microware library spec is ignored.
+# point: fpinit.o and libc3f.a. Optional cgfx/termcap/alib/dbg libraries use
+# the canonical native C3 archives. Other Microware library specs are ignored.
 #
 # Locates crt0.o / fpdummy.o / fpinit.o / libc3.a / libc3lw.a relative to this
 # script; override with C3LW_HOME.
@@ -21,11 +21,16 @@ while [ -L "$self" ]; do
 	case "$link" in /*) self=$link ;; *) self=$(dirname "$self")/$link ;; esac
 done
 home=${C3LW_HOME:-$(cd "$(dirname "$self")" && pwd)}
-out=; objs=; fp="$home/fpdummy.o"
+out=; objs=; extra=; libc=c3; fp="$home/fpdummy.o"
 for a in "$@"; do
 	case "$a" in
 		-o=*)     out=${a#-o=} ;;
-		-l=*fp.l) fp="$home/fpinit.o" ;;	# opt in to MC6839 floating point
+		-l=*clibf.l|-l=*libc3f.a) libc=c3f; fp="$home/fpinit.o" ;;
+		-l=*cgfx.l|-l=*libcgfx.a) extra="$extra -lcgfx" ;;
+		-l=*termcap.l|-l=*libtermcap.a) extra="$extra -ltermcap" ;;
+		-l=*alib.l|-l=*libalib.a) extra="$extra -lalib" ;;
+		-l=*dbg.l|-l=*libdbg.a) extra="$extra -ldbg" ;;
+		-l=*fp.l) libc=c3f; fp="$home/fpinit.o" ;;	# opt in to MC6839 floating point
 		-l=*|-y)  ;;			# Microware library specs - ignored
 		-*)       ;;			# other rlink flags (-m, -e, ...) - ignored
 		*cstart*) ;;			# Microware C startup - replaced by crt0.o
@@ -35,4 +40,4 @@ done
 [ -n "$out" ] || { echo "c3-ld: no -o=output" >&2; exit 2; }
 [ -f "$fp" ] || { echo "c3-ld: $fp not found (run buildlibc.sh)" >&2; exit 2; }
 # shellcheck disable=SC2086
-lwlink --format=os9 -s "$home/os9c3.ld" -o "$out" "$home/crt0.o" $objs $fp "-L$home" "-lc3" "-lc3lw"
+lwlink --format=os9 -s "$home/os9c3.ld" -o "$out" "$home/crt0.o" $objs $fp "-L$home" $extra "-l$libc" "-lc3lw"

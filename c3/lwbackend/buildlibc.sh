@@ -5,7 +5,9 @@ set -eu
 # The canonical builder queries make for module names. Suppress recursive
 # directory banners inherited from a parent GNU make invocation.
 MAKEFLAGS=--no-print-directory python3 "$lib_source/c3/build.py" --c3 "$c3" --out "$c3/.libc"
-cp "$c3/.libc/libc3.a" "$here/libc3.a"
+for archive in libc3 libc3f libcgfx libtermcap libalib libdbg; do
+    cp "$c3/.libc/$archive.a" "$here/$archive.a"
+done
 python3 - "$c3/.libc/BUILD.json" "$here/LIBC.json" "$lib_revision" <<'META'
 import json,sys
 from pathlib import Path

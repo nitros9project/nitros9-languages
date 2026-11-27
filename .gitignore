@@ -37,3 +37,13 @@ ccompiler/make
 ccompiler/rd
 ccompiler/helpmsg
 ccompiler/lib/*_check
+
+# Generated canonical RMA distribution sources
+c3/.rma/
+
+# Generated optional canonical C3 archives
+c3/lwbackend/libc3f.a
+c3/lwbackend/libcgfx.a
+c3/lwbackend/libtermcap.a
+c3/lwbackend/libalib.a
+c3/lwbackend/libdbg.a

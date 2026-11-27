@@ -34,17 +34,18 @@ installed c3 toolchain:
 | --- | --- |
 | `make host` | Native host tools under `build/unix/` |
 | `make runtime` | Host tools, startup objects, and runtime archives in `lwbackend/` |
+| `make rma` | Runtime plus generated canonical RMA source/procedure under `.rma/` |
 | `make os9` | Runtime plus OS-9 tools under `build/os9/` |
 | `make` | OS-9 build; also creates `c3.dsk` when `COCOC` is set |
 | `make clean` | Removes host, runtime, and OS-9 build outputs |
 
-The default host/cross runtime and headers come from
+All C3 library builds and target headers come from
 [nitros9-c-libs](https://github.com/nitros9project/nitros9-c-libs), pinned in
 `nitros9-c-libs.revision`. The build fetches a clean checkout into
 `lwbackend/nitros9-c-libs/`, compiles its canonical sources with C3, and generates
 headers under `.libc/include/` (`defs` points there). No C library or integer/long
-helpers are built from the historical `lib/` tree. `lwbackend/libc3lw.a` contains
-only compiler-owned floating-point primitives; startup is compiler-owned as well.
+helpers are built from local library copies; those copies have been removed.
+`lwbackend/libc3lw.a` contains only compiler-owned floating-point primitives; startup is compiler-owned as well.
 `lwbackend/LIBC.json` records the canonical commit, source hashes, compiler hashes,
 and archive hash. To use an existing clean checkout at that exact revision:
 
@@ -213,15 +214,80 @@ compiler works in two-pass mode.
 | `optexp/` | Working peephole optimizer |
 | `build/unix/`, `build/os9/` | Host and OS-9 build rules and outputs |
 | `lwbackend/` | LWTOOLS translation, linking, and runtime builders |
-| `defs/`, `lib/` | Target headers and C library sources |
+| `defs/` | Symlink to generated canonical target headers |
+| `.libc/`, `.rma/` | Ignored generated canonical library outputs |
 | `make/`, `lorder/`, `lsplit/` | Supporting build and library utilities |
 | `test/`, `docs/` | Library test sources and reference documentation |
 
-## Historical RMA distribution
+## RMA distribution
 
-The optional RMA/rlink disk builder and its on-target `mklibs` procedure are
-historical workflows. They use the archived `lib/` sources and `legacy-defs/`
-headers; those are not inputs to the maintained LWASM host/cross runtime or the
-bakeoff. RMA/ROF migration is separate from the native LWASM library profile.
-The current canonical profile does not provide the historical CGFX or floating
-stdio archives.
+The RMA/rlink disk uses the same `nitros9-c-libs.revision`, generated headers,
+and native ABI as the LWTOOLS build. There are no local C library or header
+copies. `make rma` exports the canonical archive's exact member list as RMA
+source, restores RMA initialized-data sections/relocations, and generates the
+on-target `mklibs` procedure. It does not add runtime wrappers.
+
+The disk builder stages those generated units under `C3/src/rma`, the exact
+pinned canonical source under `C3/src/nitros9-c-libs`, and compiler sources under
+`C3/src`. On OS-9, `shell <mklibs` assembles the prepared units and builds
+`C3/lib/clib.l`; it requires RMA/rlink but no Python or Git. Preparing new library
+sources requires the host build. Startup (`lwbackend/cstart.a`) and FP primitives
+remain compiler-owned. `LIBC.json` on the disk records the canonical revision.
+
+The canonical dependency also supplies full floating stdio, scanf/atof and math,
+CGFX, terminal parameter expansion/ttytype lookup, environment files, legacy OS-9
+calls, register-ABI assembler utilities, and debug tracing. The assembly bodies
+remain in nitros9-c-libs. See [the companion port](https://github.com/nitros9project/nitros9-c-libs/pull/41)
+and its migration manifest for source provenance and baseline-incomplete files.
+
+Host and installed builds include `libc3f.a`, `libcgfx.a`, `libtermcap.a`,
+`libalib.a`, and `libdbg.a` beside the compact `libc3.a`. Select them with
+`-l=fp.l`/`-l=clibf.l`, `-l=cgfx.l`, `-l=termcap.l`, `-l=alib.l`, or `-l=dbg.l`.
+Floating execution requires FPO9. The default printf float stub remains compact.
+`alib` uses assembly register contracts, not C argument conventions.
+
+On-target `mklibs` builds `clib.l`, `clibf.l`, `clibt.l`, `cgfx.l`, `termcap.l`,
+`alib.l`, `dbg.l`, `fp.l`, and startup/system support. Use `clibf.l` for complete
+floating stdio; `fp.l` also retains the historical `pffinit()` link anchor.
+The original assembler-utility source is assembled directly to retain its
+register ABI and dollar-symbol spellings. Other RMA units derive from the exact
+canonical archive members, including direct-page storage and macro selection.
+No compiler-local library source is restored.
+
+RMA checks, after `make dsk COCOC=/path/to/CoCoC`:
+
+```sh
+python3 -m unittest discover -s scripts/tests
+make rma
+python3 scripts/check-rma-library.py --rma-dir .rma
+BOOTDSK=/path/to/boot.dsk ROM=/path/to/rel_picothing.srec \
+  USIM09PT=/path/to/usim09pt make ontarget COCOC=/path/to/CoCoC
+```
+
+The native kernel check validates every ROF member and runs the canonical ABI
+probe with both optimizer settings, adding initialized data/code pointer and BSS
+checks. `ontarget` also compiles and executes a hello program with the on-target
+compiler. It changes only a scratch copy of the supplied boot image. Results,
+console output, and RMA build logs remain in `$WORK` for inspection.
+
+### Existing target-compiler limitation
+
+The target compiler's `c3comp1` currently crashes while compiling the hello smoke
+program (`PC=$004A`, invalid instruction). This was reproduced on a clean build
+of main revision `140cb20127cb294373eaedaa05b9ff6a12d995a0`, before the library-copy
+removal. Thus `make ontarget` currently fails at its compiler smoke check after
+the two RMA library/ABI probes pass. The checker reports that failure.
+
+To validate just the RMA library on a prepared disk:
+
+```sh
+python3 scripts/check-rma-runtime.py --disk c3.dsk \
+  --boot-disk /path/to/boot.dsk --firmware /path/to/rel_picothing.srec \
+  --emulator /path/to/usim09pt --out /tmp/c3-rma-check-new
+```
+
+Use a fresh output directory for each run. Add `--self-host` to include the
+currently failing target-compiler smoke test. Add `--features` to run all migrated
+feature probes at both optimization levels; build the distribution with
+`FPO9=/path/to/Float09.bin` first. This test assembles and links on the actual
+OS-9 kernel, independently of the host assembler bridge.

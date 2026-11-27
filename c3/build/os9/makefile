@@ -47,8 +47,8 @@ install:
 
 # ---- dsk: one command -> a complete c3-on-NitrOS-9 distribution disk ---------
 # Builds the tools, then mkdsk.sh lays out an OS-9 image (mounted as the driver's
-# default base /dd):  CMDS/ (c3 tools + the Microware r-utils), defs/ (c3 v2-ABI
-# headers), src/ (compiler + library sources + the mklibs build procedure) and an
+# default base /dd): CMDS/ (c3 tools + Microware r-utils), defs/ (canonical
+# headers), src/ (compiler + canonical library + generated RMA/mklibs) and an
 # empty lib/ that mklibs populates on first boot.  See mkdsk.sh for the knobs.
 dsk: all
 	DSK="$(CURDIR)/$(DSK)" DSKNAME="$(DSKNAME)" LSECTORS="$(LSECTORS)" COCOC="$(COCOC)" \

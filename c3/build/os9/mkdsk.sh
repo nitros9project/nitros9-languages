@@ -5,9 +5,9 @@
 #   CMDS/    the cross-built c3 tools  +  the Microware r-utils (rma rlink mold
 #            rdump) that the on-target driver shells out to (ASMBNAME=rma,
 #            LINKNAME=rlink); every module gets the OS-9 execute attribute.
-#   C3/defs/ c3's own v2-ABI headers (NOT CoCoC's - different ABI).
+#   C3/defs/ generated canonical nitros9-c-libs headers.
 #   C3/lib/  empty; populated on first boot by `C3/src/mklibs` (build-on-target).
-#   C3/src/  the c3 compiler + library sources, and the mklibs procedure.
+#   C3/src/  compiler + pinned canonical sources, generated RMA, and mklibs.
 # defs, lib and src live under C3/ so that c3 can share a disk with the
 # Microware C compiler, whose DEFS/ and LIB/ hold files of the same names.
 #
@@ -82,54 +82,31 @@ done
 stage=$here/.diststage
 rm -rf "$stage"
 
-# headers: c3's own v2-ABI defs + the ROF header
+# Every distribution uses the pinned canonical headers and generated RMA units.
+python3 "$c3/scripts/rma-library.py" --c3 "$c3" --out "$stage/src/rma"
 mkdir -p "$stage/defs"
-cp "$c3"/legacy-defs/*.h "$stage/defs/"
-cp "$c3"/include/rof.h "$stage/defs/"
+cp -R "$c3/.libc/include/." "$stage/defs/"
+cp "$c3/include/rof.h" "$stage/defs/"
+cp "$stage/src/rma/mklibs" "$stage/src/mklibs"
+cp "$c3/lwbackend/LIBC.json" "$stage/defs/LIBC.json"
 
-# compiler sources
+# Compiler sources and the exact canonical library source for inspection and
+# regeneration on a host. The target only needs RMA; no Python is required there.
 for d in prep comp optexp exec; do
-	mkdir -p "$stage/src/$d"
-	cp "$c3/$d"/*.c "$stage/src/$d/" 2>/dev/null || true
-	cp "$c3/$d"/*.h "$stage/src/$d/" 2>/dev/null || true
+    mkdir -p "$stage/src/$d"
+    cp "$c3/$d"/*.c "$stage/src/$d/"
+    cp "$c3/$d"/*.h "$stage/src/$d/" 2>/dev/null || true
 done
-
-# library sources, pre-substituted for rma the same way the host build does:
-# strip `use'/IFP1, then os9defs.sed (syscall/error-code names -> codes) and
-# libdefs.sed (stdio FILE offsets -> literals), so on-target rma needs none of
-# the lwasm-flavoured defs files (which it cannot assemble).
-STRIP='/^[ \t]*[Ii][Ff][Pp]1/,/^[ \t]*[Ee][Nn][Dd][Cc]/d;/^[ \t]*[Uu][Ss][Ee][ \t]/d'
-ppa() { sed -e "$STRIP" "$1" | sed -f "$c3/lwbackend/os9defs.sed" | sed -f "$c3/lwbackend/libdefs.sed"; }
-# The back-end standalones use no stdio names, so like buildlibc.sh they skip
-# libdefs.sed: its substitutions are not word-bounded (_fd would turn
-# fpwrap's _fdec into a label rma rejects).
-ppb() { sed -e "$STRIP" "$1" | sed -f "$c3/lwbackend/os9defs.sed"; }
-for d in lib.a sys.a; do
-	mkdir -p "$stage/src/lib/$d"
-	for f in "$c3/lib/$d"/*.a; do ppa "$f" > "$stage/src/lib/$d/$(basename "$f")"; done
+lib_source=${NITROS9_C_LIBS_DIR:-$c3/lwbackend/nitros9-c-libs}
+[ "$(git -C "$lib_source" rev-parse HEAD)" = "$(cat "$c3/nitros9-c-libs.revision")" ] || {
+    echo 'mkdsk: canonical source revision mismatch; rebuild runtime' >&2; exit 1;
+}
+mkdir -p "$stage/src/nitros9-c-libs"
+for d in lib include c3 math cgfx asm termcap; do
+    # git archive excludes generated build outputs and records only the pin.
+    git -C "$lib_source" archive HEAD "$d" | tar -xf - -C "$stage/src/nitros9-c-libs"
 done
-cp "$c3/lib/lib.a/chcodes.c" "$stage/src/lib/lib.a/"	# C: compiled (c3 -2), not rma'd
-cp "$c3/lib/lib.a/patmatch.c" "$stage/src/lib/lib.a/"	# likewise
-
-# long (32-bit) integer arithmetic (fseek/scanf reference _ladd/_lcmpr/...)
-mkdir -p "$stage/src/imath"
-for f in claddsub clbits clcommon clcompare clconvert cldiv \
-         clincdec clmove clmul clnegcompl clshifts \
-         ccmult ccmod ccdiv cshifts rpterr; do
-	ppa "$c3/lib/imath/$f.a" > "$stage/src/imath/$f.a"
-done
-
-# back-end standalones not in the stock lib (getpid/attach/getenv/mkstemp, the
-# MC6839 FP helpers fpwrap, and both FP startups: the no-op fpdummy for clib.l
-# and fpinit for the opt-in fp.l), plus a minimal valid ROF for sys.l
-mkdir -p "$stage/src/back"
-for f in getpid attach getenv mkstemp fpwrap fpdummy fpinit; do
-	ppb "$c3/lwbackend/$f.a" > "$stage/src/back/$f.a"
-done
-printf ' psect sysstub_a,0,0,0,0,0\n endsect\n' > "$stage/src/sysstub.a"
-
-# the on-target library-build procedure
-cp "$here/mklibs" "$stage/src/mklibs"
+cp "$c3/nitros9-c-libs.revision" "$stage/src/nitros9-c-libs/REVISION"
 
 echo "mkdsk: C3/defs/ + C3/src/ (text, LF->CR)"
 os9 makdir "$DSK,C3"
@@ -151,7 +128,7 @@ fi
 rm -rf "$stage"
 echo "mkdsk: done -> $DSK"
 echo "  CMDS:    c3 c3prep c3comp1 c3comp2 c3optx lorder lsplit make + $RUTILS"
-echo "  C3/defs: c3 v2-ABI headers"
-echo "  C3/src:  compiler sources + rma-ready library sources (lib/ imath/ back/), mklibs"
+echo "  C3/defs: canonical nitros9-c-libs headers"
+echo "  C3/src:  compiler + canonical library sources, generated RMA, mklibs"
 echo "  C3/lib:  (build on-target:  chx /dd/cmds; chd /dd/c3/src; shell <mklibs)"
 echo "  Modules: FPO9 (MC6839 floating point)"
